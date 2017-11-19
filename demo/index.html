@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.5.4/react.js"></script>
+    <script>
+    // this should go to blinkloader.min.js
+    console.log('hello from blinkloader');
+
+    function blinkloaderGetImage(url) {
+      return new Promise(function(resolve, reject){
+        var img = new Image()
+        img.onload = function(){
+          resolve(url)
+        }
+
+        img.onerror = function(err){
+          reject(err)
+        }
+        img.src = url
+      })
+    }
+
+    function blinkloaderSendOptimizationRequest(url) {
+      console.log("SENT OPTIMIZATION REQUEST");
+      var img = new Image();
+      img.src = url;
+    }
+    </script>
+  </head>
+  <body>
+    <div class="App">
+    </div>
+  </body>
+</html>
