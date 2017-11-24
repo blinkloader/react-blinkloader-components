@@ -6,6 +6,6 @@ import {render} from 'react-dom';
 import { Img } from '../src/index';
 
 const App = () => {
-  return <Img src='https://cdn.blinkloader.com/2656743524/1716968120/20851_max-RL.png' />;
+  return <Img src='https://example.com/13772_draper-associates.png' userId={1039841217} />;
 };
 render(<App />, document.querySelector('.App'));

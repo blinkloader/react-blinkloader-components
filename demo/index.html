@@ -2,28 +2,29 @@
   <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.5.4/react.js"></script>
     <script>
+var Blinkloader=function(){};Blinkloader.getPageProtocol=function(link){link=link||window.location.href;return link.split("/")[0]};Blinkloader.resolveUrl=function(url,path){var pathValidationRegex=/[^ "]+$/;if(!pathValidationRegex.test(path)||path.indexOf("javascript:")!==-1||path.indexOf("data:")!==-1||path.indexOf("base64,")!==-1){return null}url=url.split("?")[0];url=url.split("#")[0];var urlParts=url.split("//")[1].split("/");if(urlParts.length>1){if(urlParts[urlParts.length-1].split(".").length>1){url=url.slice(0,-urlParts[urlParts.length-1].length)}}if(url[url.length-1]==="/"){url=url.slice(0,-1)}urlParts=url.split("//")[1].split("/");if(path[0]==="/"){if(urlParts.length>1){url=url.slice(0,-urlParts.slice(1,urlParts.length).join("/").length);if(url[url.length-1]==="/"){url=url.slice(0,-1)}}path="."+path}var url1=url.split("/");var url2=path.split("/");var url3=[];for(var i=0,l=url1.length;i<l;i++){if(url1[i]==".."){url3.pop()}else if(url1[i]=="."){continue}else{url3.push(url1[i])}}for(var i=0,l=url2.length;i<l;i++){if(url2[i]==".."){url3.pop()}else if(url2[i]=="."){continue}else{url3.push(url2[i])}}return url3.join("/")};Blinkloader.retinaSupport=function(){return window.matchMedia("(-webkit-min-device-pixel-ratio: 2), (min-device-pixel-ratio: 2), (min-resolution: 192dpi)").matches};Blinkloader.webpSupport=function(callback){var img=new Image;img.src="data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA";img.onload=function(){return callback(true)};img.onerror=function(){return callback(false)}};Blinkloader.supportedImageFormats=["png","jpeg","jpg"];Blinkloader.getRelevantWidth=function(width){if(width<=1||width>1450){return null}else if(width<=450){return 450}else if(width<=800){return 800}else if(width<=1300){return 1300}else if(width<=1450){return 1450}};Blinkloader.getImageName=function(imageUrl){imageUrl=imageUrl.split("?")[0];imageUrl=imageUrl.split("#")[0];var ext=Blinkloader.getImageExtension(imageUrl);var urlParts=imageUrl.split("/");var imageWithExt=urlParts[urlParts.length-1];return imageWithExt.slice(0,-(ext.length+1))};Blinkloader.getImageExtension=function(imageUrl){var urlElements=imageUrl.split("?")[0].split("#")[0].split("/");var imgExtensionElms=urlElements[urlElements.length-1].split(".");if(imgExtensionElms.length>1){return imgExtensionElms[imgExtensionElms.length-1].toLowerCase()}else{return null}};Blinkloader.buildImageUrl=function(payload){var pageUrl=payload.pageUrl;var src=payload.src;var protocol=Blinkloader.getPageProtocol(pageUrl);var urlValidationRegex=/^(http|https):\/\/[^ "]+$/;var srcIsPotentialPath=!urlValidationRegex.test(src);if(srcIsPotentialPath){var srcIsValidUrlWithMissingProtocol=urlValidationRegex.test(protocol+src);if(srcIsValidUrlWithMissingProtocol){return protocol+src}var resolvedUrl=Blinkloader.resolveUrl(pageUrl,src);return resolvedUrl}var validSrc=src;return validSrc};Blinkloader.prepareCdnImageUrl=function(payload,callback){var cdnDomain=payload.cdnDomain||"https://1094983016.rsc.cdn77.org";var pageUrl=payload.pageUrl||window.location.href;var width=payload.width;var height=payload.height;var src=payload.src;var userId=payload.userId;var retina=Blinkloader.retinaSupport();var imgUrl=Blinkloader.buildImageUrl(payload);var ext;if(imgUrl){ext=Blinkloader.getImageExtension(imgUrl)}if(!ext||!(Blinkloader.supportedImageFormats.indexOf(ext)>-1)){return callback(null)}Blinkloader.webpSupport(function(webp){if(webp){ext="webp"}if(ext==="jpg"){ext="jpeg"}var imgQueryString=imgUrl.split("?")[1];var relevantWidth=Blinkloader.getRelevantWidth(width);var imgRequestUrl=cdnDomain+"/"+userId+"/"+Blinkloader.getImageName(imgUrl);if(relevantWidth){imgRequestUrl=imgRequestUrl+"-"+relevantWidth}if(retina&&relevantWidth!==null){imgRequestUrl=imgRequestUrl+"-R"}imgRequestUrl=imgRequestUrl+"."+ext;if(imgQueryString){imgRequestUrl=imgRequestUrl+"?"+imgQueryString}return callback(imgRequestUrl)})};Blinkloader.getImage=function(payload){return new Promise(function(resolve,reject){Blinkloader.prepareCdnImageUrl(payload,function(imgUrl){if(imgUrl===null){resolve(null)}else{var img=new Image;img.onload=function(){resolve(imgUrl)};img.onerror=function(err){reject(err)};img.src=imgUrl}})})};
     // this should go to blinkloader.min.js
-    console.log('hello from blinkloader');
-
-    function blinkloaderGetImage(url) {
-      return new Promise(function(resolve, reject){
-        var img = new Image()
-        img.onload = function(){
-          resolve(url)
-        }
-
-        img.onerror = function(err){
-          reject(err)
-        }
-        img.src = url
-      })
-    }
-
-    function blinkloaderSendOptimizationRequest(url) {
-      console.log("SENT OPTIMIZATION REQUEST");
-      var img = new Image();
-      img.src = url;
-    }
+    // console.log('hello from blinkloader');
+    //
+    // function blinkloaderGetImage(url) {
+    //   return new Promise(function(resolve, reject){
+    //     var img = new Image()
+    //     img.onload = function(){
+    //       resolve(url)
+    //     }
+    //
+    //     img.onerror = function(err){
+    //       reject(err)
+    //     }
+    //     img.src = url
+    //   })
+    // }
+    //
+    // function blinkloaderSendOptimizationRequest(url) {
+    //   console.log("SENT OPTIMIZATION REQUEST");
+    //   var img = new Image();
+    //   img.src = url;
+    // }
     </script>
   </head>
   <body>
