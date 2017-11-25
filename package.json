@@ -12,7 +12,7 @@
     "build:umd": "cross-env BABEL_ENV=commonjs NODE_ENV=development webpack src/index.js dist/react-blinkloader-components.js --config webpack.config.prod.js",
     "build:umd:min": "cross-env BABEL_ENV=commonjs NODE_ENV=production webpack src/index.js dist/react-blinkloader-components.min.js --config webpack.config.prod.js",
     "lint": "eslint src demo",
-    "build": "yarn run lint && yarn run build:commonjs && yarn run build:es && yarn run build:umd && yarn run build:umd:min",
+    "build": "yarn run build:commonjs && yarn run build:es && yarn run build:umd && yarn run build:umd:min",
     "clean": "rimraf lib dist es",
     "prettier": "prettier src/**/*.js demo/**/*.js --write",
     "prettier-list-different": "prettier src/**/*.js demo/**/*.js --list-different",
@@ -24,6 +24,7 @@
   "author": "Blinkloader (https://blinkloader.com)",
   "license": "MIT",
   "dependencies": {
+    "dotenv-webpack": "^1.5.4",
     "prop-types": "^15.6.0"
   },
   "repository": {

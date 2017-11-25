@@ -1,7 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+const contextTypes = {
+  blinkloader: PropTypes.shape({
+    userId: PropTypes.string,
+    token:  PropTypes.string
+  })
+};
+
 class Img extends React.Component {
+  static contextTypes = contextTypes;
   constructor(props) {
     super(props);
     this.state = {
@@ -17,7 +25,6 @@ class Img extends React.Component {
 
   getInitialRatio({ target: image }) {
     const { offsetHeight, offsetWidth } = image;
-    // console.log(image.absUrl("src"))
     this.setState({initialRender: false, height: offsetHeight, width: offsetWidth });
   }
 
@@ -27,22 +34,17 @@ class Img extends React.Component {
 
   renderRelevantImage() {
     const { setSrcValue } = this;
-    const { src, userId } = this.props;
+    const { userId, token } = this.context.blinkloader;
+    const { src } = this.props;
     const { width, height } = this.state;
-    const imagePayload = { width, height, src };
-    Blinkloader.getImage({src,width,height,userId}).then(function(url){
+    const imagePayload = { width, height, src, userId, token };
+    Blinkloader.getImage(imagePayload).then(function(url){
       setSrcValue(url);
     }).catch(function(errorMessage){
-      // setSrcValue(src);
-      // blinkloaderSendOptimizationRequest(src);
+      setSrcValue(src);
     })
   }
 
-// select big size for unknown proportions
-
-  // fetch cdn
-  // fetch original
-  // request optimization
   componentDidUpdate(prevProps, prevState) {
     const { initialRender } = this.state;
     prevState.initialRender !== initialRender && this.renderRelevantImage();
