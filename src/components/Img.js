@@ -16,33 +16,62 @@ class Img extends React.Component {
       imgSrc: null,
       width: null,
       height: null,
+      additionalImgClasses: '',
       initialRender: true
     };
     this.setSrcValue = this.setSrcValue.bind(this);
-    this.getInitialRatio = this.getInitialRatio.bind(this);
     this.renderRelevantImage = this.renderRelevantImage.bind(this);
+    this.setCustomClass = this.setCustomClass.bind(this);
   }
 
-  getInitialRatio({ target: image }) {
-    const { offsetHeight, offsetWidth } = image;
-    this.setState({initialRender: false, height: offsetHeight, width: offsetWidth });
+  setSrcValue(url, classes) {
+    classes = classes || '';
+    this.setState({imgSrc: url, additionalImgClasses: classes})
   }
 
-  setSrcValue(url) {
-    this.setState({imgSrc: url})
+  setCustomClass(classes) {
+    classes = classes || '';
+    this.setState({additionalImgClasses: classes})
   }
 
   renderRelevantImage() {
-    const { setSrcValue } = this;
+    const { setSrcValue, setCustomClass } = this;
     const { userId, token } = this.context.blinkloader;
     const { src } = this.props;
     const { width, height } = this.state;
-    const imagePayload = { width, height, src, userId, token };
-    Blinkloader.getImage(imagePayload).then(function(url){
-      setSrcValue(url);
-    }).catch(function(errorMessage){
-      setSrcValue(src);
-    })
+    const imagePayload = { width, height, src, userId, token, pageUrl: window.location.href };
+    const loadEverythingElse = (svgUrl) => {
+      Blinkloader.getImage(imagePayload).then(function(url){
+        if (svgUrl) {
+          setSrcValue(svgUrl, 'blnk-fadeout');
+        }
+        setTimeout(function () {
+          setSrcValue(url, 'blnk-fadein');
+        }, 800);
+      }).catch(function(errorMessage){
+        if (svgUrl) {
+          setSrcValue(svgUrl, 'blnk-fadeout');
+        }
+        setTimeout(function () {
+          setSrcValue(src, 'blnk-fadein');
+        }, 800);
+      })
+    }
+
+    Blinkloader.getSvgImage(imagePayload).then(function(svgUrl){
+      setSrcValue(svgUrl, 'blnk-fadein');
+      loadEverythingElse(svgUrl);
+    }).catch(function (svgError) {
+      loadEverythingElse();
+    });
+  }
+
+  componentDidMount() {
+    const { imgPlaceholder } = this;
+    if (imgPlaceholder) {
+      const { height, width } = imgPlaceholder;
+      this.setState({initialRender: false, height, width });
+    }
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -51,13 +80,13 @@ class Img extends React.Component {
   }
 
   render() {
-    const { width } = this.props;
-    const { imgSrc, initialRender } = this.state;
+    const { width, src, className, ...inheritedProps } = this.props;
+    const { imgSrc, initialRender, additionalImgClasses } = this.state;
     const imgPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
     if (initialRender === true) {
-      return <img style={{width: width}} src={imgPlaceholder} onLoad={this.getInitialRatio} />;
+      return <img style={{width: width}} src={imgPlaceholder} ref={c => this.imgPlaceholder = c} className={className} {...inheritedProps} />;
     } else {
-      return imgSrc && <img style={{width: width}} src={imgSrc} />;
+      return imgSrc && <img style={{width: width}} src={imgSrc}  className={className + ` ${additionalImgClasses}`} {...inheritedProps} />;
     }
   }
 }
