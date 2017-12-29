@@ -40,7 +40,7 @@ class Img extends React.Component {
     const { src } = this.props;
     const { width, height } = this.state;
     const imagePayload = { width, height, src, projectId, token, pageUrl: window.location.href };
-    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === '1.0.1') {
+    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === '1.0.2') {
       const loadEverythingElse = (svgUrl) => {
         Blinkloader.getImage(imagePayload).then(function(url){
           if (svgUrl) {
@@ -76,7 +76,7 @@ class Img extends React.Component {
         loadEverythingElse();
       });
     } else {
-      console.error('Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-1.0.1.min.js" in page head.')
+      console.error('Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-1.0.2.min.js" in page head.')
       setSrcValue(src, 'blnk-visible');
     }
   }
