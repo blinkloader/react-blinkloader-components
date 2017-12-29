@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 const contextTypes = {
   blinkloader: PropTypes.shape({
-    userId: PropTypes.string,
+    projectId: PropTypes.string,
     token:  PropTypes.string
   })
 };
@@ -36,34 +36,49 @@ class Img extends React.Component {
 
   renderRelevantImage() {
     const { setSrcValue, setCustomClass } = this;
-    const { userId, token } = this.context.blinkloader;
+    const { projectId, token } = this.context.blinkloader;
     const { src } = this.props;
     const { width, height } = this.state;
-    const imagePayload = { width, height, src, userId, token, pageUrl: window.location.href };
-    const loadEverythingElse = (svgUrl) => {
-      Blinkloader.getImage(imagePayload).then(function(url){
-        if (svgUrl) {
-          setSrcValue(svgUrl, 'blnk-fadeout');
-        }
-        setTimeout(function () {
-          setSrcValue(url, 'blnk-fadein');
-        }, 800);
-      }).catch(function(errorMessage){
-        if (svgUrl) {
-          setSrcValue(svgUrl, 'blnk-fadeout');
-        }
-        setTimeout(function () {
-          setSrcValue(src, 'blnk-fadein');
-        }, 800);
-      })
-    }
+    const imagePayload = { width, height, src, projectId, token, pageUrl: window.location.href };
+    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === '1.0.1') {
+      const loadEverythingElse = (svgUrl) => {
+        Blinkloader.getImage(imagePayload).then(function(url){
+          if (svgUrl) {
+            setSrcValue(svgUrl, 'blnk-fadein');
+            setTimeout(function () {
+              setSrcValue(url, 'blnk-unblur');
+              setTimeout(function () {
+                setSrcValue(url, 'blnk-visible');
+              }, 1000);
+            }, 800);
+          } else {
+            setSrcValue(src, 'blnk-visible');
+          }
+        }).catch(function(errorMessage){
+          if (svgUrl) {
+            setSrcValue(svgUrl, 'blnk-fadein');
+            setTimeout(function () {
+              setSrcValue(src, 'blnk-unblur');
+              setTimeout(function () {
+                setSrcValue(src, 'blnk-visible');
+              }, 1000);
+            }, 800);
+          } else {
+            setSrcValue(src, 'blnk-visible');
+          }
+        })
+      }
 
-    Blinkloader.getSvgImage(imagePayload).then(function(svgUrl){
-      setSrcValue(svgUrl, 'blnk-fadein');
-      loadEverythingElse(svgUrl);
-    }).catch(function (svgError) {
-      loadEverythingElse();
-    });
+      Blinkloader.getSvgImage(imagePayload).then(function(svgUrl){
+        setSrcValue(svgUrl, 'blnk-fadein');
+        loadEverythingElse(svgUrl);
+      }).catch(function (svgError) {
+        loadEverythingElse();
+      });
+    } else {
+      console.error('Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-1.0.1.min.js" in page head.')
+      setSrcValue(src, 'blnk-visible');
+    }
   }
 
   componentDidMount() {
