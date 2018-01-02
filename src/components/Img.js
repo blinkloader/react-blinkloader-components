@@ -17,91 +17,133 @@ class Img extends React.Component {
       width: null,
       height: null,
       additionalImgClasses: '',
-      initialRender: true
+      initialRender: true,
+      placeholderTriggered: false,
+      imgPlaceholder: null,
+      imgElement: null
     };
     this.setSrcValue = this.setSrcValue.bind(this);
+    this.renderRelevantSvgImage = this.renderRelevantSvgImage.bind(this);
     this.renderRelevantImage = this.renderRelevantImage.bind(this);
-    this.setCustomClass = this.setCustomClass.bind(this);
+    this.triggeredEmptyPlaceholder = this.triggeredEmptyPlaceholder.bind(this);
+    this.setImagePlaceholder = this.setImagePlaceholder.bind(this);
+    this.setImageElement = this.setImageElement.bind(this);
   }
 
-  setSrcValue(url, classes) {
-    classes = classes || '';
-    this.setState({imgSrc: url, additionalImgClasses: classes})
+  setSrcValue(url, classes, config) {
+    this.setState({
+      imgSrc: url,
+      additionalImgClasses: classes || '',
+      placeholderTriggered: this.state.placeholderTriggered || (config||{}).isPlaceholder
+    })
   }
 
-  setCustomClass(classes) {
-    classes = classes || '';
-    this.setState({additionalImgClasses: classes})
+  triggeredEmptyPlaceholder() {
+    this.setState({ placeholderTriggered: true });
   }
 
   renderRelevantImage() {
-    const { setSrcValue, setCustomClass } = this;
-    const { projectId, token } = this.context.blinkloader;
-    const { src } = this.props;
-    const { width, height } = this.state;
-    const imagePayload = { width, height, src, projectId, token, pageUrl: window.location.href };
-    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === '1.0.2') {
-      const loadEverythingElse = (svgUrl) => {
-        Blinkloader.getImage(imagePayload).then(function(url){
-          if (svgUrl) {
-            setSrcValue(svgUrl, 'blnk-fadein');
+    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === '1.0.3') {
+      if (!this.disableFurtherImgRequests) {
+        this.disableFurtherImgRequests = this.disableFurtherImgRequests || true;
+        const { setSrcValue } = this;
+        const { projectId, token } = this.context.blinkloader;
+        const { src } = this.props;
+        const { width, height, placeholderTriggered } = this.state;
+        const imagePayload = { width, height, src, projectId, token, pageUrl: window.location.href };
+        const replaceSvgWithImage = (lnk) => {
+          setTimeout(function () {
+            setSrcValue(lnk, 'blnk-unblur', {isTarget: true});
             setTimeout(function () {
-              setSrcValue(url, 'blnk-unblur');
-              setTimeout(function () {
-                setSrcValue(url, 'blnk-visible');
-              }, 1000);
-            }, 800);
+              setSrcValue(lnk, 'blnk-visible',  {isTarget: true});
+            }, 1000);
+          }, 800);
+        }
+        Blinkloader.getImage(imagePayload).then(function(url){
+          if (placeholderTriggered) {
+            replaceSvgWithImage(url);
           } else {
-            setSrcValue(src, 'blnk-visible');
+            setSrcValue(url, 'blnk-visible');
           }
         }).catch(function(errorMessage){
-          if (svgUrl) {
-            setSrcValue(svgUrl, 'blnk-fadein');
-            setTimeout(function () {
-              setSrcValue(src, 'blnk-unblur');
-              setTimeout(function () {
-                setSrcValue(src, 'blnk-visible');
-              }, 1000);
-            }, 800);
-          } else {
-            setSrcValue(src, 'blnk-visible');
-          }
+          setSrcValue(src, 'blnk-visible');
         })
       }
+    } else {
+      console.error('Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-1.0.3.min.js" in page head.')
+      setSrcValue(src, 'blnk-visible');
+    }
+  }
 
+  renderRelevantSvgImage() {
+    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === '1.0.3') {
+      const { setSrcValue, triggeredEmptyPlaceholder } = this;
+      const { projectId, token } = this.context.blinkloader;
+      const { src } = this.props;
+      const { width, height } = this.state;
+      const imagePayload = { width, height, src, projectId, token, pageUrl: window.location.href };
       Blinkloader.getSvgImage(imagePayload).then(function(svgUrl){
-        setSrcValue(svgUrl, 'blnk-fadein');
-        loadEverythingElse(svgUrl);
-      }).catch(function (svgError) {
-        loadEverythingElse();
+        setSrcValue(svgUrl, 'blnk-fadein', {isPlaceholder: true});
+      }).catch(function (svgErr) {
+        setSrcValue(src, 'blnk-visible');
       });
     } else {
-      console.error('Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-1.0.2.min.js" in page head.')
+      console.error('Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-1.0.3.min.js" in page head.')
       setSrcValue(src, 'blnk-visible');
     }
   }
 
   componentDidMount() {
+    const { progressive, lazyload } = this.props;
     const { imgPlaceholder } = this;
     if (imgPlaceholder) {
       const { height, width } = imgPlaceholder;
       this.setState({initialRender: false, height, width });
+
+      if (progressive === false) {
+        if (lazyload === false) {
+          this.renderRelevantImage();
+        } else {
+          Blinkloader.addVisibilityListener(imgPlaceholder, this.renderRelevantImage);
+        }
+      }
     }
   }
 
   componentDidUpdate(prevProps, prevState) {
-    const { initialRender } = this.state;
-    prevState.initialRender !== initialRender && this.renderRelevantImage();
+    const { initialRender, placeholderTriggered } = this.state;
+    const { imgElement, imgPlaceholder, setSrcValue } = this;
+    const { progressive, lazyload } = this.props;
+    if (progressive !== false) {
+      if (placeholderTriggered === true && prevState.placeholderTriggered === false) {
+        if (lazyload === false) {
+          this.renderRelevantImage();
+        } else {
+          Blinkloader.addVisibilityListener(imgElement, this.renderRelevantImage);
+        }
+      }
+      if (prevState.initialRender !== initialRender) {
+        this.renderRelevantSvgImage();
+      }
+    }
+  }
+
+  setImagePlaceholder(el) {
+    this.imgPlaceholder = el;
+  }
+
+  setImageElement(el) {
+    this.imgElement = el;
   }
 
   render() {
-    const { width, src, className, ...inheritedProps } = this.props;
+    const { width, src, className, progressive, lazyload, ...inheritedProps } = this.props;
     const { imgSrc, initialRender, additionalImgClasses } = this.state;
     const imgPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
-    if (initialRender === true) {
-      return <img style={{width: width}} src={imgPlaceholder} ref={c => this.imgPlaceholder = c} className={className} {...inheritedProps} />;
+    if (initialRender === true || !imgSrc) {
+      return <img style={{width: width}} src={imgPlaceholder} ref={this.setImagePlaceholder} className={className} {...inheritedProps} />;
     } else {
-      return imgSrc && <img style={{width: width}} src={imgSrc}  className={className + ` ${additionalImgClasses}`} {...inheritedProps} />;
+      return imgSrc && <img style={{width: width}} src={imgSrc} ref={this.setImageElement} className={className + ` ${additionalImgClasses}`} {...inheritedProps} />;
     }
   }
 }
