@@ -43,12 +43,12 @@ class Img extends React.Component {
   }
 
   renderRelevantImage() {
+    const { src } = this.props;
     if (typeof Blinkloader !== 'undefined' && Blinkloader.version === '1.0.4') {
       if (!this.disableFurtherImgRequests) {
         this.disableFurtherImgRequests = this.disableFurtherImgRequests || true;
         const { setSrcValue } = this;
         const { projectId, token } = this.context.blinkloader;
-        const { src } = this.props;
         const { width, height, placeholderTriggered } = this.state;
         const imagePayload = { width, height, src, projectId, token, pageUrl: window.location.href };
         const replaceSvgWithImage = (lnk) => {
@@ -71,17 +71,17 @@ class Img extends React.Component {
       }
     } else {
       console.error('Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-1.0.4.min.js" in page head.')
-      setSrcValue(src, 'blnk-visible');
+      this.setSrcValue(src, 'blnk-visible');
     }
   }
 
   renderRelevantSvgImage() {
+    const { src } = this.props;
     if (typeof Blinkloader !== 'undefined' && Blinkloader.version === '1.0.4') {
       if (!this.disableFurtherSvgImgRequests) {
         this.disableFurtherSvgImgRequests = this.disableFurtherSvgImgRequests || true;
         const { setSrcValue, triggeredEmptyPlaceholder } = this;
         const { projectId, token } = this.context.blinkloader;
-        const { src } = this.props;
         const { width, height } = this.state;
         const imagePayload = { width, height, src, projectId, token, pageUrl: window.location.href };
         Blinkloader.getSvgImage(imagePayload).then(function(svgUrl){
@@ -92,7 +92,7 @@ class Img extends React.Component {
       }
     } else {
       console.error('Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-1.0.4.min.js" in page head.')
-      setSrcValue(src, 'blnk-visible');
+      this.setSrcValue(src, 'blnk-visible');
     }
   }
 
@@ -102,9 +102,8 @@ class Img extends React.Component {
     if (imgPlaceholder) {
       const { height, width } = imgPlaceholder;
       this.setState({initialRender: false, height, width });
-
       if (progressive === false) {
-        if (lazyload === false) {
+        if (lazyload === false || !(typeof Blinkloader !== 'undefined' && Blinkloader.version === '1.0.4')) {
           this.renderRelevantImage();
         } else {
           Blinkloader.addVisibilityListener(imgPlaceholder, this.renderRelevantImage);
@@ -119,14 +118,14 @@ class Img extends React.Component {
     const { progressive, lazyload } = this.props;
     if (progressive !== false) {
       if (placeholderTriggered === true && prevState.placeholderTriggered === false) {
-        if (lazyload === false) {
+        if (lazyload === false || !(typeof Blinkloader !== 'undefined' && Blinkloader.version === '1.0.4')) {
           this.renderRelevantImage();
         } else {
           Blinkloader.addVisibilityListener(imgElement, this.renderRelevantImage);
         }
       }
       if (prevState.initialRender !== initialRender) {
-        if (lazyload === false) {
+        if (lazyload === false || !(typeof Blinkloader !== 'undefined' && Blinkloader.version === '1.0.4')) {
           this.renderRelevantSvgImage();
         } else {
           Blinkloader.addVisibilityListener(imgPlaceholder, this.renderRelevantSvgImage);
