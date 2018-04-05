@@ -1,7 +1,54 @@
 <html>
   <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.5.4/react.js"></script>
-    <script src="https://cdn.blinkloader.com/blinkloader.min.js"></script>
+    <script src="https://cdn.blinkloader.com/blinkloader-1.0.4.min.js"></script>
+    <script>
+      var lazyloader = {
+        started: false,
+        sorted: false,
+        images: [],
+        totalnum: 0,
+      };
+      lazyloader.registerImage = function(imagefunc, svgfunc, offset) {
+        this.images.push({imagefunc: imagefunc, svgfunc: svgfunc, offset: offset});
+      }
+      lazyloader.addImage = function() {
+        this.totalnum++;
+      }
+      lazyloader.loadImage = function(svgObj) {
+        if (this.started) {
+          return
+        }
+        if (this.images.length !== this.totalnum) {
+          return
+        }
+        if (!this.sorted) {
+          this.images.sort(function(a, b) {
+            if (a.offset >= b.offset) {
+              return 1;
+            }
+            return -1;
+          });
+        }
+        this.images.forEach(function(i, n) {
+          var imgf = i.imagefunc;
+          var svgf = i.svgfunc;
+          setTimeout(function() {
+            if (svgObj && svgObj.svg === true) {
+              console.log("fff");
+              svgf();
+              return
+            } 
+            console.log("sdf");
+            imgf();
+          }, (n+1)*10);
+        });
+        this.images = [];
+        this.started = false;
+        this.sorted = false;
+      }
+      Blinkloader.lazyloader = lazyloader;
+    </script>
   </head>
   <body>
     <div class="App">
