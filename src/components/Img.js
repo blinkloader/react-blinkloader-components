@@ -81,7 +81,14 @@ class Img extends React.Component {
   }
 
   render() {
-    const { width, className, src, ...inheritedProps } = this.props;
+    const {
+      width,
+      className,
+      src,
+      accelerate,
+      asBackground,
+      ...inheritedProps
+    } = this.props;
     if (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion) {
       console.error(noBlinkloaderJs);
       return <img src={src} style={{width: width}} className={className || '' + ` blnk-visible`} {...inheritedProps} />
@@ -91,7 +98,21 @@ class Img extends React.Component {
     if (initialRender) {
       return <img src={imgPlaceholder} style={{width: width}} ref={this.setImagePlaceholder} className={className || ''} {...inheritedProps} />;
     }
-    return imgSrc && <img style={{width: width}} src={imgSrc} ref={this.setImageElement} className={className || '' + ` ${additionalImgClasses}`} {...inheritedProps} />;
+    if (imgSrc) {
+      if (accelerate === true || asBackground) {
+        return <div
+          style={{
+            width: width,
+            backgroundImage: "url(" + imgSrc + ")",
+            backgroundSize: "cover"
+          }}
+          ref={this.setImageElement}
+          className={className || '' + ` ${additionalImgClasses}`}
+          {...inheritedProps}
+        ></div>;
+      }
+      return <img style={{width: width}} src={imgSrc} ref={this.setImageElement} className={className || '' + ` ${additionalImgClasses}`} {...inheritedProps} />;
+    }
   }
 }
 

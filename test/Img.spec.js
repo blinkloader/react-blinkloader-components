@@ -38,12 +38,14 @@ describe('Editor', function () {
       done();
     }, 1000)
   })
+
   it('renders initial img src', function() {
     const wrapper = mount(<Img src={"test-src"} width={300} />, {
       context: testContext
     });
     expect(wrapper.prop('src')).to.equal("test-src");
   })
+
   it('renders 2 times', function(done) {
     spy(Img.prototype, 'componentDidUpdate');
     const wrapper = mount(<Img src={"test-src"} width={300} />, {
@@ -52,6 +54,28 @@ describe('Editor', function () {
     setTimeout(function() {
       wrapper.update();
       expect(Img.prototype.componentDidUpdate.calledOnce).to.equal(true);
+      done();
+    }, 1000)
+  })
+
+  it('renders div if asBackground is set', function(done) {
+    const wrapper = mount(<Img src={"test-src"} width={300} asBackground />, {
+      context: testContext
+    });
+    setTimeout(function() {
+      wrapper.update();
+      expect(wrapper.html()).to.equal('<div style="width: 300px; background-image: url(test-src); background-size: cover;" class=" blnk-visible"></div>')
+      done();
+    }, 1000)
+  })
+
+  it('renders div if accelerate={true} is set', function(done) {
+    const wrapper = mount(<Img src={"test-src"} width={300} accelerate={true} />, {
+      context: testContext
+    });
+    setTimeout(function() {
+      wrapper.update();
+      expect(wrapper.html()).to.equal('<div style="width: 300px; background-image: url(test-src); background-size: cover;" class=" blnk-visible"></div>')
       done();
     }, 1000)
   })
