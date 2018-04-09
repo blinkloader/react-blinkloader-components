@@ -3,19 +3,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.5.4/react.js"></script>
     <script src="https://cdn.blinkloader.com/blinkloader-1.0.4.min.js"></script>
     <script>
+      Blinkloader.version = "1.2.0";
+      
       var lazyloader = {
         started: false,
         sorted: false,
         images: [],
         totalnum: 0,
       };
-      lazyloader.registerImage = function(imagefunc, svgfunc, offset) {
-        this.images.push({imagefunc: imagefunc, svgfunc: svgfunc, offset: offset});
+      lazyloader.registerImage = function(imagefunc, offset) {
+        this.images.push({imagefunc: imagefunc, offset: offset});
       }
       lazyloader.addImage = function() {
         this.totalnum++;
       }
-      lazyloader.loadImage = function(svgObj) {
+      lazyloader.loadImage = function() {
         if (this.started) {
           return
         }
@@ -24,31 +26,21 @@
         }
         if (!this.sorted) {
           this.images.sort(function(a, b) {
-            if (a.offset >= b.offset) {
-              return 1;
-            }
-            return -1;
+            return a.offset >= b.offset ? 1 : -1;
           });
         }
         this.images.forEach(function(i, n) {
-          var imgf = i.imagefunc;
-          var svgf = i.svgfunc;
           setTimeout(function() {
-            if (svgObj && svgObj.svg === true) {
-              console.log("fff");
-              svgf();
-              return
-            } 
-            console.log("sdf");
-            imgf();
-          }, (n+1)*10);
+            i.imagefunc();
+          }, (n+1)*40);
         });
         this.images = [];
         this.started = false;
         this.sorted = false;
       }
+      
       Blinkloader.lazyloader = lazyloader;
-      Blinkloader.version = "1.2.0";
+      
     </script>
   </head>
   <body>

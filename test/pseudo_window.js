@@ -3,7 +3,10 @@ const request = require('sync-request');
 
 const { JSDOM } = jsdom;
 
-const window = new JSDOM(`<!DOCTYPE html><p>Hello world</p>`, {
+const window = new JSDOM(`<!DOCTYPE html>
+  <body>
+  </body>
+  </html>`, {
   runScripts: "dangerously"
 }).window;
 
@@ -18,6 +21,43 @@ head.appendChild(script);
 
 window.eval(`
   Blinkloader.version = "1.2.0";
+
+  var lazyloader = {
+    started: false,
+    sorted: false,
+    images: [],
+    totalnum: 0,
+  };
+  lazyloader.registerImage = function(imagefunc, offset) {
+    this.images.push({imagefunc: imagefunc, offset: offset});
+  }
+  lazyloader.addImage = function() {
+    this.totalnum++;
+  }
+  lazyloader.loadImage = function() {
+    if (this.started) {
+      return
+    }
+    if (this.images.length !== this.totalnum) {
+      return
+    }
+    if (!this.sorted) {
+      this.images.sort(function(a, b) {
+        return a.offset >= b.offset ? 1 : -1;
+      });
+    }
+    this.images.forEach(function(i, n) {
+      setTimeout(function() {
+        i.imagefunc();
+      }, (n+1)*40);
+    });
+    this.images = [];
+    this.started = false;
+    this.sorted = false;
+  }
+  
+  Blinkloader.lazyloader = lazyloader;
+
 `);
 
 function copyPropertyRefs(src, target) {

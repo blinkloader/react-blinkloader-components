@@ -16,6 +16,12 @@ class Img extends React.Component {
   static contextTypes = contextTypes;
   constructor(props) {
     super(props);
+
+    let validSdk = true; 
+    if (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion) {
+      validSdk = false;
+    }
+
     this.state = {
       initialRender: true,
       imgPlaceholder: null,
@@ -23,16 +29,23 @@ class Img extends React.Component {
       height: null,
       disableFurtherImgRequests: false,
       imgSrc: null,
-      additionalImgClasses: ''
+      additionalImgClasses: '',
+      validSdk: validSdk
     };
+
     this.renderRelevantImage = this.renderRelevantImage.bind(this);
     this.setSrcValue = this.setSrcValue.bind(this);
     this.setImagePlaceholder = this.setImagePlaceholder.bind(this);
     this.setImageElement = this.setImageElement.bind(this);
+
+    if (props.lazyload === true && validSdk) {
+      Blinkloader.lazyloader.addImage();
+    }
   }
 
   componentDidMount() {
-    const { imgPlaceholder } = this.state;
+    const { lazyload } = this.props;
+    const { imgPlaceholder, validSdk } = this.state;
     if (!imgPlaceholder) {
       return;
     }
@@ -41,6 +54,10 @@ class Img extends React.Component {
     this.state.height = height || width;
     this.state.width = width;
 
+    if (lazyload == true && validSdk) {
+      Blinkloader.lazyloader.loadImage();
+      return
+    }
     this.renderRelevantImage();
   }
 
@@ -55,9 +72,12 @@ class Img extends React.Component {
     this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
     const { projectId, token } = this.context.blinkloader;
     const { setSrcValue } = this;
-    const { src } = this.props;
+    const { src, testOffset } = this.props;
     const { width, height } = this.state;
     const imagePayload = { width, height, src, projectId, token, pageUrl: window.location.href };
+    if (testOffset) {
+      console.log("test-offset: ", testOffset);
+    }
     Blinkloader.getImage(imagePayload).then(function(url){
       setSrcValue(url, 'blnk-visible');
     }).catch(function(errorMessage){
@@ -73,6 +93,12 @@ class Img extends React.Component {
   }
 
   setImagePlaceholder(el) {
+    const { lazyload, testOffset } = this.props;
+    const { validSdk } = this.state;
+    if (lazyload === true && validSdk) {
+      const y =  el && el.y || testOffset || 0;
+      Blinkloader.lazyloader.registerImage(this.renderRelevantImage, y);
+    }
     this.state.imgPlaceholder = el;
   }
 
@@ -84,19 +110,27 @@ class Img extends React.Component {
     const {
       width,
       className,
+      style,
       src,
       accelerate,
       asBackground,
+      lazyload,
+      testOffset,
       ...inheritedProps
     } = this.props;
-    if (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion) {
+    const {
+      initialRender,
+      additionalImgClasses,
+      imgSrc,
+      validSdk
+    } = this.state
+    if (!validSdk) {
       console.error(noBlinkloaderJs);
-      return <img src={src} style={{width: width}} className={className || '' + ` blnk-visible`} {...inheritedProps} />
+      return <img src={src} style={{width: width, ...style}} className={(className || '') + ` blnk-visible`} {...inheritedProps} />
     }
     const imgPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
-    const { initialRender, additionalImgClasses, imgSrc } = this.state
     if (initialRender) {
-      return <img src={imgPlaceholder} style={{width: width}} ref={this.setImagePlaceholder} className={className || ''} {...inheritedProps} />;
+      return <img src={imgPlaceholder} style={{width: width, ...style}} ref={this.setImagePlaceholder} className={className || ''} {...inheritedProps} />;
     }
     if (imgSrc) {
       if (accelerate === true || asBackground) {
@@ -104,14 +138,15 @@ class Img extends React.Component {
           style={{
             width: width,
             backgroundImage: "url(" + imgSrc + ")",
-            backgroundSize: "cover"
+            backgroundSize: "cover",
+            ...style
           }}
           ref={this.setImageElement}
-          className={className || '' + ` ${additionalImgClasses}`}
+          className={(className || '') + ` ${additionalImgClasses}`}
           {...inheritedProps}
         ></div>;
       }
-      return <img style={{width: width}} src={imgSrc} ref={this.setImageElement} className={className || '' + ` ${additionalImgClasses}`} {...inheritedProps} />;
+      return <img style={{width: width, ...style}} src={imgSrc} ref={this.setImageElement} className={(className || '') + ` ${additionalImgClasses}`} {...inheritedProps} />;
     }
   }
 }
