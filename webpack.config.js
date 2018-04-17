@@ -24,7 +24,7 @@ const config = {
     }),
     new HtmlWebpackPlugin({
       template: './demo/index.html'
-    }),
+    })
   ],
 };
 

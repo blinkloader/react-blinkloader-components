@@ -1,0 +1,6 @@
+--compilers babel-core/register
+
+--timeout 5000
+
+--recursive
+--full-trace
