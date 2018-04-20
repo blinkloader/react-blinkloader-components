@@ -158,7 +158,7 @@ class Img extends React.Component {
           ...style
         }}
         ref={imgSrc ? this.setImageElement : this.setImagePlaceholder}
-        className={(className || '') + ` ${additionalImgClasses}`}
+        className={className || ''}
         {...inheritedProps}
       >{children}</div>;
     }
