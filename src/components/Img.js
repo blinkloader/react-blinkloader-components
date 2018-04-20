@@ -141,25 +141,42 @@ class Img extends React.Component {
     const imgPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
     if (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion) {
       console.error(noBlinkloaderJs);
-      return <img src={src} style={{width: width || style && style.width, ...style}} className={(className || '') + ` blnk-visible`} {...inheritedProps} />
+      return <img
+        src={src}
+        style={{width: width || style && style.width, ...style}}
+        className={(className || '') + ` blnk-visible`}
+        {...inheritedProps}
+      />
+    }
+    if (accelerate === true || asBackground) {
+      return <div
+        style={{
+          width: width || style && style.width,
+          backgroundImage: 'url(' + (imgSrc || imgPlaceholder) + ')',
+          backgroundSize: style.backgroundSize ? style.backgroundSize : "cover",
+          ...style
+        }}
+        ref={imgSrc ? this.setImageElement : this.setImagePlaceholder}
+        className={(className || '') + ` ${additionalImgClasses}`}
+        {...inheritedProps}
+      >{children}</div>;
     }
     if (imgSrc) {
-      if (accelerate === true || asBackground) {
-        return <div
-          style={{
-            width: width || style && style.width,
-              backgroundImage: "url(" + imgSrc + ")",
-              backgroundSize: "cover",
-              ...style
-          }}
-          ref={this.setImageElement}
-          className={(className || '') + ` ${additionalImgClasses}`}
-          {...inheritedProps}
-        >{children}</div>;
-      }
-      return <img style={{width: width || style && style.width, ...style}} src={imgSrc} ref={this.setImageElement} className={(className || '') + ` ${additionalImgClasses}`} {...inheritedProps} />;
+      return <img
+        style={{width: width || style && style.width, ...style}}
+        src={imgSrc}
+        ref={this.setImageElement}
+        className={(className || '') + ` ${additionalImgClasses}`}
+        {...inheritedProps}
+      />;
     }
-    return <img src={imgPlaceholder} style={{width: width || style && style.width, ...style}} ref={this.setImagePlaceholder} className={className || ''} {...inheritedProps} />;
+    return <img
+      src={imgPlaceholder}
+      style={{width: width || style && style.width, ...style}}
+      ref={this.setImagePlaceholder}
+      className={className || ''}
+      {...inheritedProps}
+    />;
   }
 }
 
