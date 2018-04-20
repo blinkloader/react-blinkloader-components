@@ -1,4 +1,5 @@
-import React from 'react'; import PropTypes from 'prop-types';
+import React from 'react';
+import PropTypes from 'prop-types';
 
 // Important
 const noBlinkloaderJs = 'Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-1.2.0.min.js" in page head.';
@@ -80,7 +81,7 @@ class Img extends React.Component {
     const setImgFunc = function(url) {
       const blnkClass = svgSet ? 'blnk-unblur' : 'blnk-visible';
       imageSet= true;
-      if (!cbDone) {
+      if (!cbDone && cb) {
         cb();
       }
       setSrcValue(url, blnkClass);
@@ -129,6 +130,7 @@ class Img extends React.Component {
       lazyload,
       progressive,
       testOffset,
+      children,
       ...inheritedProps
     } = this.props;
     const {
@@ -144,16 +146,16 @@ class Img extends React.Component {
     if (imgSrc) {
       if (accelerate === true || asBackground) {
         return <div
-        style={{
-          width: width || style && style.width,
-            backgroundImage: "url(" + imgSrc + ")",
-            backgroundSize: "cover",
-            ...style
-        }}
-        ref={this.setImageElement}
-        className={(className || '') + ` ${additionalImgClasses}`}
-        {...inheritedProps}
-          ></div>;
+          style={{
+            width: width || style && style.width,
+              backgroundImage: "url(" + imgSrc + ")",
+              backgroundSize: "cover",
+              ...style
+          }}
+          ref={this.setImageElement}
+          className={(className || '') + ` ${additionalImgClasses}`}
+          {...inheritedProps}
+        >{children}</div>;
       }
       return <img style={{width: width || style && style.width, ...style}} src={imgSrc} ref={this.setImageElement} className={(className || '') + ` ${additionalImgClasses}`} {...inheritedProps} />;
     }
