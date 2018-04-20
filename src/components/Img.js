@@ -23,8 +23,7 @@ class Img extends React.Component {
       disableFurtherImgRequests: false,
       imgSrc: null,
       additionalImgClasses: '',
-      validSdk: null,
-      offsetY: null
+      validSdk: null
     };
     this.renderRelevantImage = this.renderRelevantImage.bind(this);
     this.setSrcValue = this.setSrcValue.bind(this);
@@ -35,7 +34,7 @@ class Img extends React.Component {
   componentDidMount() {
     this._isMounted = true;
     const { lazyload } = this.props;
-    const { imgPlaceholder, validSdk, offsetY } = this.state;
+    const { imgPlaceholder, validSdk } = this.state;
     if (!imgPlaceholder) {
       return;
     }
@@ -44,7 +43,7 @@ class Img extends React.Component {
     this.state.height = height || width;
     this.state.width = width;
     if (lazyload == true && validSdk) {
-      Blinkloader.loadImageWithOffset(this.renderRelevantImage, offsetY);
+      Blinkloader.registerImage(this.renderRelevantImage, imgPlaceholder);
       return
     }
     this.renderRelevantImage();
@@ -53,9 +52,9 @@ class Img extends React.Component {
   componentDidUpdate() {
   }
 
-  renderRelevantImage() {
+  renderRelevantImage(cb) {
     const { width, height, validSdk } = this.state;
-    const { src, testOffset, progressive } = this.props;
+    const { src, progressive } = this.props;
     const { setSrcValue } = this;
     if (!validSdk) {
       setSrcValue(src, 'blnk-visible');
@@ -69,9 +68,6 @@ class Img extends React.Component {
     const projectId = blinkloaderProjectId;
     const token = blinkloaderToken;
     const imagePayload = { width, height, src, projectId, token, pageUrl: window.location.href };
-    if (testOffset) {
-      console.log("test-offset: ", testOffset);
-    }
     let imageSet = false;
     let svgSet = false;
     if (progressive === true) {
@@ -82,9 +78,13 @@ class Img extends React.Component {
         }
       }).catch(function(){})
     }
+    let cbDone = false;
     const setImgFunc = function(url) {
       const blnkClass = svgSet ? 'blnk-unblur' : 'blnk-visible';
       imageSet= true;
+      if (!cbDone) {
+        cb();
+      }
       setSrcValue(url, blnkClass);
     }
     Blinkloader.getImage(imagePayload).then(function(url) {
@@ -108,14 +108,9 @@ class Img extends React.Component {
   }
 
   setImagePlaceholder(el) {
-    const { testOffset, lazyload } = this.props;
     let validSdk = true; 
     if (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion) {
       validSdk = false;
-    }
-    if (lazyload === true && validSdk) {
-      const y = el && el.getBoundingClientRect().y || testOffset || 0;
-      this.state.offsetY = y;
     }
     this.state.validSdk = validSdk;
     this.state.imgPlaceholder = el;
