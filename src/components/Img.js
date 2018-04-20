@@ -127,6 +127,7 @@ class Img extends React.Component {
       src,
       accelerate,
       asBackground,
+      gradient,
       lazyload,
       progressive,
       testOffset,
@@ -152,7 +153,7 @@ class Img extends React.Component {
       return <div
         style={{
           width: width || style && style.width,
-          backgroundImage: 'url(' + (imgSrc || imgPlaceholder) + ')',
+          backgroundImage: `${gradient ? gradient + ', ' : ''} url(${imgSrc || imgPlaceholder})`,
           backgroundSize: style.backgroundSize ? style.backgroundSize : "cover",
           ...style
         }}
