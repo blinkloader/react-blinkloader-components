@@ -16,7 +16,6 @@ class Img extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      initialRender: true,
       imgPlaceholder: null,
       width: null,
       height: null,
@@ -39,7 +38,6 @@ class Img extends React.Component {
       return;
     }
     const { height, width } = imgPlaceholder;
-    this.state.initialRender = false
     this.state.height = height || width;
     this.state.width = width;
     if (lazyload == true && validSdk) {
@@ -134,15 +132,11 @@ class Img extends React.Component {
       ...inheritedProps
     } = this.props;
     const {
-      initialRender,
       additionalImgClasses,
       imgSrc,
       validSdk
     } = this.state
     const imgPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
-    if (initialRender) {
-      return <img src={imgPlaceholder} style={{width: width || style && style.width, ...style}} ref={this.setImagePlaceholder} className={className || ''} {...inheritedProps} />;
-    }
     if (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion) {
       console.error(noBlinkloaderJs);
       return <img src={src} style={{width: width || style && style.width, ...style}} className={(className || '') + ` blnk-visible`} {...inheritedProps} />
@@ -163,6 +157,7 @@ class Img extends React.Component {
       }
       return <img style={{width: width || style && style.width, ...style}} src={imgSrc} ref={this.setImageElement} className={(className || '') + ` ${additionalImgClasses}`} {...inheritedProps} />;
     }
+    return <img src={imgPlaceholder} style={{width: width || style && style.width, ...style}} ref={this.setImagePlaceholder} className={className || ''} {...inheritedProps} />;
   }
 }
 
