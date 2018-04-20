@@ -1,4 +1,5 @@
-import React from 'react'; import PropTypes from 'prop-types';
+import React from 'react';
+import PropTypes from 'prop-types';
 
 // Important
 const noBlinkloaderJs = 'Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-1.2.0.min.js" in page head.';
@@ -80,7 +81,7 @@ class Img extends React.Component {
     const setImgFunc = function(url) {
       const blnkClass = svgSet ? 'blnk-unblur' : 'blnk-visible';
       imageSet= true;
-      if (!cbDone) {
+      if (!cbDone && cb) {
         cb();
       }
       setSrcValue(url, blnkClass);
@@ -129,6 +130,7 @@ class Img extends React.Component {
       lazyload,
       progressive,
       testOffset,
+      children,
       ...inheritedProps
     } = this.props;
     const {
@@ -139,25 +141,42 @@ class Img extends React.Component {
     const imgPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
     if (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion) {
       console.error(noBlinkloaderJs);
-      return <img src={src} style={{width: width || style && style.width, ...style}} className={(className || '') + ` blnk-visible`} {...inheritedProps} />
+      return <img
+        src={src}
+        style={{width: width || style && style.width, ...style}}
+        className={(className || '') + ` blnk-visible`}
+        {...inheritedProps}
+      />
     }
-    if (imgSrc) {
-      if (accelerate === true || asBackground) {
-        return <div
+    if (accelerate === true || asBackground) {
+      return <div
         style={{
           width: width || style && style.width,
-            backgroundImage: "url(" + imgSrc + ")",
-            backgroundSize: "cover",
-            ...style
+          backgroundImage: 'url(' + (imgSrc || imgPlaceholder) + ')',
+          backgroundSize: style.backgroundSize ? style.backgroundSize : "cover",
+          ...style
         }}
+        ref={imgSrc ? this.setImageElement : this.setImagePlaceholder}
+        className={(className || '') + ` ${additionalImgClasses}`}
+        {...inheritedProps}
+      >{children}</div>;
+    }
+    if (imgSrc) {
+      return <img
+        style={{width: width || style && style.width, ...style}}
+        src={imgSrc}
         ref={this.setImageElement}
         className={(className || '') + ` ${additionalImgClasses}`}
         {...inheritedProps}
-          ></div>;
-      }
-      return <img style={{width: width || style && style.width, ...style}} src={imgSrc} ref={this.setImageElement} className={(className || '') + ` ${additionalImgClasses}`} {...inheritedProps} />;
+      />;
     }
-    return <img src={imgPlaceholder} style={{width: width || style && style.width, ...style}} ref={this.setImagePlaceholder} className={className || ''} {...inheritedProps} />;
+    return <img
+      src={imgPlaceholder}
+      style={{width: width || style && style.width, ...style}}
+      ref={this.setImagePlaceholder}
+      className={className || ''}
+      {...inheritedProps}
+    />;
   }
 }
 
