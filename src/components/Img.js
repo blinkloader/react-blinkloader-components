@@ -17,6 +17,7 @@ class Img extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      initialRender: true,
       imgPlaceholder: null,
       width: null,
       height: null,
@@ -32,6 +33,9 @@ class Img extends React.Component {
   }
 
   componentDidMount() {
+    if (this._isRendered) {
+      return;
+    }
     this._isMounted = true;
     const { lazyload } = this.props;
     const { imgPlaceholder, validSdk } = this.state;
@@ -39,6 +43,7 @@ class Img extends React.Component {
       return;
     }
     const { height, width } = imgPlaceholder;
+    this.state.initialRender = false;
     this.state.height = height || width;
     this.state.width = width;
     if (lazyload == true && validSdk) {
@@ -113,6 +118,9 @@ class Img extends React.Component {
     }
     this.state.validSdk = validSdk;
     this.state.imgPlaceholder = el;
+    if (el && el.dataset && !el.dataset.blinkSrc) {
+      this._isRendered = true;
+    }
   }
 
   setImageElement(el) {
@@ -135,12 +143,13 @@ class Img extends React.Component {
       ...inheritedProps
     } = this.props;
     const {
+      initialRender,
       additionalImgClasses,
       imgSrc,
       validSdk
     } = this.state
     const imgPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
-    if (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion) {
+    if (!initialRender && (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion)) {
       console.error(noBlinkloaderJs);
       return <img
         src={src}
@@ -148,6 +157,18 @@ class Img extends React.Component {
         className={(className || '') + ` blnk-visible`}
         {...inheritedProps}
       />
+    }
+    const dataset = {
+      "data-blink-src": src
+    };
+    if (gradient) {
+      dataset["data-blink-gradient"] = gradient;
+    }
+    if (lazyload) {
+      dataset["data-blink-lazyload"] = true;
+    }
+    if (progressive) {
+      dataset["data-blink-progressive"] = true;
     }
     if (accelerate === true || asBackground) {
       return <div
@@ -157,6 +178,7 @@ class Img extends React.Component {
           backgroundSize: style.backgroundSize ? style.backgroundSize : "cover",
           ...style
         }}
+        {...dataset}
         ref={imgSrc ? this.setImageElement : this.setImagePlaceholder}
         className={className || ''}
         {...inheritedProps}
@@ -173,6 +195,7 @@ class Img extends React.Component {
     }
     return <img
       src={imgPlaceholder}
+      {...dataset}
       style={{width: width || style && style.width, ...style}}
       ref={this.setImagePlaceholder}
       className={className || ''}
