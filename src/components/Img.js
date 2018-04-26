@@ -42,10 +42,9 @@ class Img extends React.Component {
     if (!imgPlaceholder) {
       return;
     }
-    const { height, width } = imgPlaceholder;
     this.state.initialRender = false;
-    this.state.height = height || width;
-    this.state.width = width;
+    this.state.width = Blinkloader.determineImgWidth(imgPlaceholder);
+    this.state.height = this.state.width;
     if (lazyload == true && validSdk) {
       Blinkloader.registerImage(this.renderRelevantImage, imgPlaceholder);
       return
@@ -57,7 +56,7 @@ class Img extends React.Component {
   }
 
   renderRelevantImage(cb) {
-    const { width, height, validSdk } = this.state;
+    const { width, validSdk } = this.state;
     const { src, progressive } = this.props;
     const { setSrcValue } = this;
     if (!validSdk) {
@@ -71,7 +70,7 @@ class Img extends React.Component {
     this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
     const projectId = blinkloaderProjectId;
     const token = blinkloaderToken;
-    const imagePayload = { width, height, src, projectId, token, pageUrl: window.location.href };
+    const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
     let imageSet = false;
     let svgSet = false;
     if (progressive === true) {
