@@ -19,6 +19,8 @@ class Img extends React.Component {
     this.state = {
       initialRender: true,
       imgPlaceholder: null,
+      imgBackgroundSize: null,
+      imgBackgroundPosition: null,
       width: null,
       height: null,
       disableFurtherImgRequests: false,
@@ -36,15 +38,19 @@ class Img extends React.Component {
     if (this._isRendered) {
       return;
     }
+
     this._isMounted = true;
     const { lazyload } = this.props;
     const { imgPlaceholder, validSdk } = this.state;
     if (!imgPlaceholder) {
       return;
     }
-    this.state.initialRender = false;
+
+    this.state.imgBackgroundSize = Blinkloader.determineBgSize(imgPlaceholder);
+    this.state.imgBackgroundPosition = Blinkloader.determineBgPosition(imgPlaceholder);
     this.state.width = Blinkloader.determineImgWidth(imgPlaceholder);
-    this.state.height = this.state.width;
+
+    this.state.initialRender = false;
     if (lazyload == true && validSdk) {
       Blinkloader.registerImage(this.renderRelevantImage, imgPlaceholder);
       return
@@ -98,12 +104,18 @@ class Img extends React.Component {
   }
 
   setSrcValue(url, classes) {
-    if (this._isMounted) {
-      this.setState({
-        imgSrc: url,
-        additionalImgClasses: classes || ''
-      });
+    if (!this._isMounted) {
+      return;
     }
+    const {accelerate, asBackground} = this.props;
+    const {width, imgPlaceholder} = this.state;
+    if ((accelerate === true || asBackground) && !this.state.height) {
+      this.state.height = Blinkloader.determineImgHeight(url, width, imgPlaceholder);
+    }
+    this.setState({
+      imgSrc: url,
+      additionalImgClasses: classes || ''
+    });
   }
 
   componentWillUnmount() {
@@ -145,6 +157,8 @@ class Img extends React.Component {
       initialRender,
       additionalImgClasses,
       imgSrc,
+      imgBackgroundSize,
+      imgBackgroundPosition,
       validSdk
     } = this.state
     const imgPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
@@ -152,14 +166,18 @@ class Img extends React.Component {
       console.error(noBlinkloaderJs);
       return <img
         src={src}
-        style={{width: width || style && style.width, ...style}}
+        style={{
+          width: width || "",
+          ...style
+        }}
         className={(className || '') + ` blnk-visible`}
         {...inheritedProps}
       />
     }
-    const dataset = {
-      "data-blink-src": src
-    };
+    const dataset = {};
+    if (initialRender) {
+      dataset["data-blink-src"] = src;
+    }
     if (gradient) {
       dataset["data-blink-gradient"] = gradient;
     }
@@ -170,11 +188,15 @@ class Img extends React.Component {
       dataset["data-blink-progressive"] = true;
     }
     if (accelerate === true || asBackground) {
+      const {width, height} = this.state;
       return <div
         style={{
-          width: width || style && style.width,
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: !initialRender && imgBackgroundSize,
+          backgroundPosition: !initialRender && imgBackgroundPosition,
           backgroundImage: `${gradient ? gradient + ', ' : ''} url(${imgSrc || imgPlaceholder})`,
-          backgroundSize: style.backgroundSize ? style.backgroundSize : "cover",
+          width: !initialRender && width || "",
+          height: !initialRender && height || "",
           ...style
         }}
         {...dataset}
@@ -185,7 +207,7 @@ class Img extends React.Component {
     }
     if (imgSrc) {
       return <img
-        style={{width: width || style && style.width, ...style}}
+        style={{width: width}}
         src={imgSrc}
         ref={this.setImageElement}
         className={(className || '') + ` ${additionalImgClasses}`}
@@ -195,7 +217,7 @@ class Img extends React.Component {
     return <img
       src={imgPlaceholder}
       {...dataset}
-      style={{width: width || style && style.width, ...style}}
+      style={{...style}}
       ref={this.setImagePlaceholder}
       className={className || ''}
       {...inheritedProps}
