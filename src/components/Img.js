@@ -23,6 +23,8 @@ class Img extends React.Component {
       imgBackgroundPosition: null,
       width: null,
       height: null,
+      calcWidth: null,
+      calcHeight: null,
       disableFurtherImgRequests: false,
       imgSrc: null,
       additionalImgClasses: '',
@@ -48,7 +50,13 @@ class Img extends React.Component {
 
     this.state.imgBackgroundSize = Blinkloader.determineBgSize(imgPlaceholder);
     this.state.imgBackgroundPosition = Blinkloader.determineBgPosition(imgPlaceholder);
-    this.state.width = Blinkloader.determineImgWidth(imgPlaceholder);
+
+    var w = Blinkloader.getImgWidth(imgPlaceholder);
+    if (w <= 1) {
+      this.state.calcWidth = Blinkloader.determineImgWidth(imgPlaceholder);
+    } else {
+      this.state.width = w;
+    }
 
     this.state.initialRender = false;
     if (lazyload == true && validSdk) {
@@ -62,7 +70,7 @@ class Img extends React.Component {
   }
 
   renderRelevantImage(cb) {
-    const { width, validSdk } = this.state;
+    const { width, calcWidth, validSdk } = this.state;
     const { src, progressive } = this.props;
     const { setSrcValue } = this;
     if (!validSdk) {
@@ -76,7 +84,7 @@ class Img extends React.Component {
     this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
     const projectId = blinkloaderProjectId;
     const token = blinkloaderToken;
-    const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
+    const imagePayload = { width: (width > 1 ? width : calcWidth), src, projectId, token, pageUrl: window.location.href };
     let imageSet = false;
     let svgSet = false;
     if (progressive === true) {
@@ -108,9 +116,10 @@ class Img extends React.Component {
       return;
     }
     const {accelerate, asBackground} = this.props;
-    const {width, imgPlaceholder} = this.state;
-    if ((accelerate === true || asBackground) && !this.state.height) {
-      this.state.height = Blinkloader.determineImgHeight(url, width, imgPlaceholder);
+    const {width, calcWidth, imgPlaceholder} = this.state;
+    const imgHeight = Blinkloader.getImgHeight(imgPlaceholder);
+    if ((accelerate === true || asBackground) && !this.state.calcHeight && imgHeight <= 1) {
+      this.state.calcHeight = Blinkloader.determineImgHeight(url, width > 1 ? width : calcWidth, imgPlaceholder);
     }
     this.setState({
       imgSrc: url,
@@ -161,7 +170,7 @@ class Img extends React.Component {
       imgBackgroundPosition,
       validSdk
     } = this.state
-    const imgPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
+    const srcPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
     if (!initialRender && (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion)) {
       console.error(noBlinkloaderJs);
       return <img
@@ -188,17 +197,30 @@ class Img extends React.Component {
       dataset["data-blink-progressive"] = true;
     }
     if (accelerate === true || asBackground) {
-      const {width, height} = this.state;
+      const {
+        width, 
+        height, 
+        calcWidth,
+        calcHeight,
+        imgPlaceholder
+      } = this.state;
+      const styles = {
+        ...style
+      }
+      if (!initialRender) {
+        styles.backgroundSize = imgBackgroundSize;
+        styles.backgroundPosition = imgBackgroundPosition;
+        if (calcWidth > 1) {
+          styles.width = calcWidth 
+        }
+        if (calcHeight > 1) {
+          styles.height = calcHeight;
+        }
+        styles.backgroundRepeat = 'no-repeat';
+      }
+      styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
       return <div
-        style={{
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: !initialRender && imgBackgroundSize,
-          backgroundPosition: !initialRender && imgBackgroundPosition,
-          backgroundImage: `${gradient ? gradient + ', ' : ''} url(${imgSrc || imgPlaceholder})`,
-          width: !initialRender && width || "",
-          height: !initialRender && height || "",
-          ...style
-        }}
+        style={{...styles}}
         {...dataset}
         ref={imgSrc ? this.setImageElement : this.setImagePlaceholder}
         className={className || ''}
@@ -207,7 +229,7 @@ class Img extends React.Component {
     }
     if (imgSrc) {
       return <img
-        style={{width: width}}
+        style={{...style}}
         src={imgSrc}
         ref={this.setImageElement}
         className={(className || '') + ` ${additionalImgClasses}`}
@@ -215,7 +237,7 @@ class Img extends React.Component {
       />;
     }
     return <img
-      src={imgPlaceholder}
+      src={srcPlaceholder}
       {...dataset}
       style={{...style}}
       ref={this.setImagePlaceholder}
