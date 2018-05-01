@@ -70,7 +70,7 @@ class Img extends React.Component {
   }
 
   renderRelevantImage(cb) {
-    const { width, calcWidth, validSdk } = this.state;
+    const { width, calcWidth, validSdk, imgPlaceholder } = this.state;
     const { src, progressive } = this.props;
     const { setSrcValue } = this;
     if (!validSdk) {
@@ -106,6 +106,22 @@ class Img extends React.Component {
     }
     Blinkloader.getImage(imagePayload).then(function(url) {
       setImgFunc(url);
+
+      let prevWidth = Blinkloader.getImgWidth(imgPlaceholder);
+      let curWidth = prevWidth;
+      Blinkloader.resizer.addFunc(function() {
+        if (!Blinkloader.checkVisible(imgPlaceholder)) {
+          return;
+        }
+        curWidth = Blinkloader.getImgWidth(imgPlaceholder);
+        if (curWidth > prevWidth) {
+          imagePayload.width = curWidth;
+          Blinkloader.getImage(imagePayload).then(function(url) {
+            setSrcValue(url);
+            prevWidth = curWidth;
+          }).catch(function() {});
+        }
+      });
     }).catch(function(error){
       setImgFunc(src);
     })
