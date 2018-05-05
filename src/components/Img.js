@@ -23,17 +23,19 @@ class Img extends React.Component {
       imgBackgroundPosition: null,
       width: null,
       height: null,
+      imgHeight: null,
       calcWidth: null,
-      calcHeight: null,
+      calcDivHeight: null,
       disableFurtherImgRequests: false,
       imgSrc: null,
-      additionalImgClasses: '',
+      svgImgSrc: null,
+      svgImgSet: false,
+      imgFadeoutClass: null,
       validSdk: null
     };
     this.renderRelevantImage = this.renderRelevantImage.bind(this);
     this.setSrcValue = this.setSrcValue.bind(this);
     this.setImagePlaceholder = this.setImagePlaceholder.bind(this);
-    this.setImageElement = this.setImageElement.bind(this);
   }
 
   componentDidMount() {
@@ -53,7 +55,7 @@ class Img extends React.Component {
 
     var w = Blinkloader.getImgWidth(imgPlaceholder);
     if (w <= 1) {
-      this.state.calcWidth = Blinkloader.determineImgWidth(imgPlaceholder);
+      this.state.calcWidth = Blinkloader.determineImgDivWidth(imgPlaceholder);
     } else {
       this.state.width = w;
     }
@@ -66,15 +68,12 @@ class Img extends React.Component {
     this.renderRelevantImage();
   }
 
-  componentDidUpdate() {
-  }
-
   renderRelevantImage(cb) {
     const { width, calcWidth, validSdk, imgPlaceholder } = this.state;
-    const { src, progressive } = this.props;
-    const { setSrcValue } = this;
+    const { src, progressive, asBackground, accelerate } = this.props;
+    const { setSrcValue, setState } = this;
     if (!validSdk) {
-      setSrcValue(src, 'blnk-visible');
+      setSrcValue(src);
       return
     }
     const { disableFurtherImgRequests } = this.state;
@@ -86,60 +85,87 @@ class Img extends React.Component {
     const token = blinkloaderToken;
     const imagePayload = { width: (width > 1 ? width : calcWidth), src, projectId, token, pageUrl: window.location.href };
     let imageSet = false;
-    let svgSet = false;
+    const that = this;
     if (progressive === true) {
       Blinkloader.getSvgImage(imagePayload).then(function(url) {
         if (!imageSet) {
-          svgSet = true;
-          setSrcValue(url, 'blnk-fadein');
+          that.state.svgImgSrc = url;
+          that.state.svgImgSet = true;
+          setSrcValue(url);
         }
       }).catch(function(){})
     }
     let cbDone = false;
     const setImgFunc = function(url) {
-      const blnkClass = svgSet ? 'blnk-unblur' : 'blnk-visible';
       imageSet= true;
       if (!cbDone && cb) {
         cb();
       }
-      setSrcValue(url, blnkClass);
+
+      setSrcValue(url);
     }
     Blinkloader.getImage(imagePayload).then(function(url) {
-      setImgFunc(url);
+      if (progressive === true && !asBackground && !accelerate) {
+        if (that.state.svgImgSet) {
+          Blinkloader.stylePseudoEl(url, that.state.svgImgSrc, function(imgClass) {
+            if (!imgClass) {
+              return;
+            }
 
-      let prevWidth = Blinkloader.getImgWidth(imgPlaceholder);
-      let curWidth = prevWidth;
-      Blinkloader.resizer.addFunc(function() {
-        if (!Blinkloader.checkVisible(imgPlaceholder)) {
+            that.state.imgFadeoutClass = imgClass;
+            setImgFunc(url);
+          });
           return;
         }
-        curWidth = Blinkloader.getImgWidth(imgPlaceholder);
-        if (curWidth > prevWidth) {
-          imagePayload.width = curWidth;
-          Blinkloader.getImage(imagePayload).then(function(url) {
-            setSrcValue(url);
-            prevWidth = curWidth;
-          }).catch(function() {});
-        }
-      });
-    }).catch(function(error){
+      }
+
+      setImgFunc(url);
+
+      //let prevWidth = Blinkloader.getImgWidth(imgPlaceholder);
+      //let curWidth = prevWidth;
+      //Blinkloader.resizer.addFunc(function() {
+      //  if (!Blinkloader.checkVisible(imgPlaceholder)) {
+      //    return;
+      //  }
+      //  curWidth = Blinkloader.getImgWidth(imgPlaceholder);
+      //  if (curWidth > prevWidth) {
+      //    imagePayload.width = curWidth;
+      //    Blinkloader.getImage(imagePayload).then(function(url) {
+      //      setSrcValue(url);
+      //      prevWidth = curWidth;
+      //    }).catch(function() {});
+      //  }
+      //});
+      
+    }).catch(function(err){
       setImgFunc(src);
     })
   }
 
-  setSrcValue(url, classes) {
+  setSrcValue(url) {
     if (!this._isMounted) {
       return;
     }
     const {accelerate, asBackground} = this.props;
     const {width, calcWidth, imgPlaceholder} = this.state;
-    const imgHeight = Blinkloader.getImgHeight(imgPlaceholder);
-    if ((accelerate === true || asBackground) && !this.state.calcHeight && imgHeight <= 1) {
-      this.state.calcHeight = Blinkloader.determineImgHeight(url, width > 1 ? width : calcWidth, imgPlaceholder);
+
+    const imgDivHeight = Blinkloader.getImgDivHeight(imgPlaceholder);
+    if (imgDivHeight > 1) {
+      this.state.divHeight = imgDivHeight;
     }
+    if (!this.state.calcDivHeight && imgDivHeight <= 1) {
+      const h = Blinkloader.determineImgDivHeight(url, width > 1 ? width : calcWidth, imgPlaceholder);
+      if (h > 1) {
+        this.state.calcDivHeight = h;
+      }
+    }
+    const imgHeight = Blinkloader.determineImgHeight(url, width > 1 ? width : calcWidth);
+    if (imgHeight > 1) {
+      this.state.imgHeight = imgHeight
+    }
+
     this.setState({
-      imgSrc: url,
-      additionalImgClasses: classes || ''
+      imgSrc: url
     });
   }
 
@@ -159,13 +185,8 @@ class Img extends React.Component {
     }
   }
 
-  setImageElement(el) {
-    this.imgElement = el;
-  }
-
   render() {
     const {
-      width,
       className,
       style,
       src,
@@ -178,77 +199,124 @@ class Img extends React.Component {
       children,
       ...inheritedProps
     } = this.props;
+
+    const propWidth = this.props.width;
+
     const {
       initialRender,
       additionalImgClasses,
       imgSrc,
+      svgImgSrc,
+      svgImgSet,
+      width,
+      calcWidth,
+      height,
+      calcDivHeight,
+      imgStyleSet,
+      imgFadeoutClass,
+      imgHeight,
+      originalImgSet,
       imgBackgroundSize,
       imgBackgroundPosition,
+      imgPlaceholder,
       validSdk
     } = this.state
+
+    const styles = {...style}
+    if (!initialRender) {
+      if (calcWidth > 1) {
+        styles.width = calcWidth 
+      }
+      if (calcDivHeight > 1) {
+        styles.height = calcDivHeight;
+      }
+      styles.backgroundSize = imgBackgroundSize;
+      styles.backgroundPosition = imgBackgroundPosition;
+      styles.backgroundRepeat = 'no-repeat';
+      styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
+    }
+
     const srcPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
+
+    const dataset = {};
+    if (initialRender) {
+      dataset["data-blink-src"] = src;
+      if (gradient) {
+        dataset["data-blink-gradient"] = gradient;
+      }
+      if (lazyload) {
+        dataset["data-blink-lazyload"] = true;
+      }
+      if (progressive) {
+        dataset["data-blink-progressive"] = true;
+      }
+      if (asBackground || accelerate === true) {
+        dataset["data-blink-accelerate"] = true;
+      }
+    }
+
     if (!initialRender && (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion)) {
       console.error(noBlinkloaderJs);
       return <img
         src={src}
         style={{
-          width: width || "",
+          width: propWidth || "",
           ...style
         }}
-        className={(className || '') + ` blnk-visible`}
+        className={(className || '')}
         {...inheritedProps}
       />
     }
-    const dataset = {};
-    if (initialRender) {
-      dataset["data-blink-src"] = src;
-    }
-    if (gradient) {
-      dataset["data-blink-gradient"] = gradient;
-    }
-    if (lazyload) {
-      dataset["data-blink-lazyload"] = true;
-    }
-    if (progressive) {
-      dataset["data-blink-progressive"] = true;
-    }
+
     if (accelerate === true || asBackground) {
-      const {
-        width, 
-        height, 
-        calcWidth,
-        calcHeight,
-        imgPlaceholder
-      } = this.state;
-      const styles = {
-        ...style
-      }
-      if (!initialRender) {
-        styles.backgroundSize = imgBackgroundSize;
-        styles.backgroundPosition = imgBackgroundPosition;
-        if (calcWidth > 1) {
-          styles.width = calcWidth 
-        }
-        if (calcHeight > 1) {
-          styles.height = calcHeight;
-        }
-        styles.backgroundRepeat = 'no-repeat';
-      }
-      styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
       return <div
         style={{...styles}}
         {...dataset}
-        ref={imgSrc ? this.setImageElement : this.setImagePlaceholder}
+        ref={this.setImagePlaceholder}
         className={className || ''}
         {...inheritedProps}
       >{children}</div>;
     }
-    if (imgSrc) {
+
+    if (progressive) {
+      if (!initialRender) {
+        if (!imgFadeoutClass) {
+          return <div
+            style={{...styles}}
+            className={(className || '')}
+            {...inheritedProps}
+          ></div>
+        }
+        delete styles.backgroundSize;
+        delete styles.backgroundPosition;
+        delete styles.backgroundRepeat;
+        delete styles.backgroundImage;
+        return <div
+          style={{
+            position: 'relative',
+            width: !width ? calcWidth : '',
+            height: imgHeight,
+            ...styles
+          }}
+          className={(className || '') + ` blnk-image ${imgFadeoutClass}`}
+          {...inheritedProps}
+        ></div>;
+      }
+      return <div
+        {...dataset}
+        style={{...styles}}
+        ref={this.setImagePlaceholder}
+        className={className || ''}
+        {...inheritedProps}
+      ></div>;
+    }
+
+    if (!initialRender && imgSrc) {
       return <img
-        style={{...style}}
         src={imgSrc}
-        ref={this.setImageElement}
-        className={(className || '') + ` ${additionalImgClasses}`}
+        style={{...style}}
+        ref={this.setImagePlaceholder}
+        className={className || ''}
         {...inheritedProps}
       />;
     }
