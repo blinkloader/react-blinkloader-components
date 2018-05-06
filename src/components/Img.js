@@ -93,7 +93,7 @@ class Img extends React.Component {
           that.state.svgImgSet = true;
           setSrcValue(url);
         }
-      }).catch(function(){})
+      }).catch(function(){});
     }
     let cbDone = false;
     const setImgFunc = function(url) {
@@ -284,6 +284,7 @@ class Img extends React.Component {
           return <div
             style={{...styles}}
             className={(className || '')}
+            {...dataset}
             {...inheritedProps}
           ></div>
         }
