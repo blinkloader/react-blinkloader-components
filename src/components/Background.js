@@ -1,28 +1,30 @@
 import React from 'react';
 
-// Important
-export const noBlinkloaderJs = 'Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-2.0.0.min.js" in page head.';
-export const blinkloaderVersion = '2.0.0';
+import {
+  noBlinkloaderJs,
+  blinkloaderVersion,
+  setBlinkloaderCreds,
+  blinkloaderProjectId,
+  blinkloaderToken,
+  srcPlaceholder
+} from './Img';
 
-export const srcPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
-
-export let blinkloaderProjectId = '';
-export let blinkloaderToken = '';
-
-export const setBlinkloaderCreds = (pId, t) => {
-  blinkloaderProjectId = pId;
-  blinkloaderToken = t;
-}
-
-export default class Img extends React.Component {
+export default class Background extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       initialRender: true,
       imgPlaceholder: null,
+      disableFurtherImgRequests: false,
+      width: null,
+      height: null,
+      backgroundSize: null,
+      backgroundPosition: null,
+      backgroundRepeat: null,
       imgSrc: null,
       validSdk: null
     };
+
     this.renderRelevantImage = this.renderRelevantImage.bind(this);
     this.setSrcValue = this.setSrcValue.bind(this);
     this.setImagePlaceholder = this.setImagePlaceholder.bind(this);
@@ -45,6 +47,7 @@ export default class Img extends React.Component {
       Blinkloader.registerImage(this.renderRelevantImage, imgPlaceholder);
       return
     }
+
     this.renderRelevantImage();
   }
 
@@ -52,20 +55,24 @@ export default class Img extends React.Component {
     const { validSdk, imgPlaceholder } = this.state;
     const { src } = this.props;
     const { setSrcValue, setState } = this;
+
     if (!validSdk) {
       setSrcValue(src);
       return
     }
+
     const { disableFurtherImgRequests } = this.state;
     if (disableFurtherImgRequests) {
       return;
     }
+
     this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
+
     const projectId = blinkloaderProjectId;
     const token = blinkloaderToken;
     const width = Blinkloader.determineDivWidth(imgPlaceholder);
     const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
-    const that = this;
+
     let cbDone = false;
     const setImgFunc = function(url) {
       if (!cbDone && cb) {
@@ -74,6 +81,7 @@ export default class Img extends React.Component {
 
       setSrcValue(url);
     }
+
     Blinkloader.getImage(imagePayload).then(function(url) {
       setImgFunc(url);
     }).catch(function(err){
@@ -84,6 +92,25 @@ export default class Img extends React.Component {
   setSrcValue(url) {
     if (!this._isMounted) {
       return;
+    }
+
+    const {imgPlaceholder} = this.state;
+
+    if (!this.state.initialRender && imgPlaceholder && typeof Blinkloader !== 'undefined') {
+      this.state.backgroundSize = Blinkloader.determineBgSize(imgPlaceholder);
+      this.state.backgroundPosition = Blinkloader.determineBgPosition(imgPlaceholder);
+      this.state.backgroundRepeat = Blinkloader.determineBgRepeat(imgPlaceholder);
+
+      let width = Blinkloader.getDivWidth(imgPlaceholder);
+      if (width <= 1) {
+        width = Blinkloader.determineDivWidth(imgPlaceholder);
+        this.state.width = width;
+      }
+      let height = Blinkloader.getDivHeight(imgPlaceholder);
+      if (height <= 1) {
+        height = Blinkloader.determineDivHeight(url, width, imgPlaceholder);
+        this.state.height = height;
+      }
     }
 
     this.setState({
@@ -113,16 +140,36 @@ export default class Img extends React.Component {
       style,
       src,
       lazyload,
+      gradient,
+      children,
       ...inheritedProps
     } = this.props;
 
     const {
       initialRender,
+      width,
+      height,
+      backgroundSize,
+      backgroundPosition,
+      backgroundRepeat,
       imgSrc,
       imgPlaceholder,
+      validSdk
     } = this.state
 
-    const srcPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
+    const styles = {...style}
+    if (!initialRender) {
+      if (width > 1) {
+        styles.width = width;
+      }
+      if (height > 1) {
+        styles.height = height;
+      }
+      styles.backgroundRepeat = backgroundRepeat || 'no-repeat';
+      styles.backgrondPosition = backgroundPosition || 'center';
+      styles.backgroundSize = backgroundSize || 'cover';
+      styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
+    }
 
     const dataset = {};
     if (initialRender) {
@@ -130,34 +177,37 @@ export default class Img extends React.Component {
       if (lazyload) {
         dataset["data-blink-lazyload"] = true;
       }
+      if (gradient) {
+        dataset["data-blink-gradient"] = gradient
+      }
+      dataset["data-blink-background"] = true;
     }
 
     if (!initialRender && (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion)) {
       console.error(noBlinkloaderJs);
-      return <img
-        src={src}
-        style={{...style}}
-        className={(className || '')}
-        {...inheritedProps}
-      />
-    }
-
-    if (!initialRender && imgSrc) {
-      return <img
-        src={imgSrc}
-        style={{...style}}
+      return <div
+        style={{...styles}}
         ref={this.setImagePlaceholder}
         className={className || ''}
         {...inheritedProps}
-      />;
+      >{children}</div>;
     }
-    return <img
-      src={srcPlaceholder}
+    
+    if (!initialRender) {
+      return <div
+        style={{...styles}}
+        ref={this.setImagePlaceholder}
+        className={className || ''}
+        {...inheritedProps}
+      >{children}</div>;
+    }
+
+    return <div
+      style={{...styles}}
       {...dataset}
-      style={{...style}}
       ref={this.setImagePlaceholder}
       className={className || ''}
       {...inheritedProps}
-    />;
+    >{children}</div>;
   }
 };
