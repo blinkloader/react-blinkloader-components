@@ -2,6 +2,7 @@ import React from 'react';
 
 import {
   noBlinkloaderJs,
+  noBlinkloaderProjectId,
   blinkloaderVersion,
   setBlinkloaderCreds,
   blinkloaderProjectId,
@@ -56,10 +57,20 @@ export default class ImgBlock extends React.Component {
 
   renderRelevantImage(cb) {
     const { validSdk, imgPlaceholder } = this.state;
-    const { src } = this.props;
+    const { src, progressive } = this.props;
     const { setSrcValue, setState } = this;
 
-    if (!validSdk) {
+    const projectId = blinkloaderProjectId;
+    const token = blinkloaderToken;
+
+    let noProjectId = false;
+
+    if(projectId === "") {
+      console.error(noBlinkloaderProjectId);
+      noProjectId = true;
+    }
+
+    if (!validSdk || noProjectId) {
       setSrcValue(src);
       return
     }
@@ -71,20 +82,21 @@ export default class ImgBlock extends React.Component {
 
     this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
 
-    const projectId = blinkloaderProjectId;
-    const token = blinkloaderToken;
     const width = Blinkloader.determineDivWidth(imgPlaceholder);
     const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
 
-    let imageSet = false;
     const that = this;
-    Blinkloader.getSvgImage(imagePayload).then(function(url) {
-      if (!imageSet) {
-        that.state.svgImgSrc = url;
-        that.state.svgImgSet = true;
-        setSrcValue(url);
-      }
-    }).catch(function(){});
+
+    let imageSet = false;
+    if (progressive) {
+      Blinkloader.getSvgImage(imagePayload).then(function(url) {
+        if (!imageSet) {
+          that.state.svgImgSrc = url;
+          that.state.svgImgSet = true;
+          setSrcValue(url);
+        }
+      }).catch(function(){});
+    }
 
     let cbDone = false;
     const setImgFunc = function(url) {
@@ -92,7 +104,6 @@ export default class ImgBlock extends React.Component {
       if (!cbDone && cb) {
         cb();
       }
-
       setSrcValue(url);
     }
 
@@ -165,6 +176,7 @@ export default class ImgBlock extends React.Component {
       style,
       src,
       lazyload,
+      progressive,
       gradient,
       children,
       ...inheritedProps
@@ -212,7 +224,10 @@ export default class ImgBlock extends React.Component {
       if (gradient) {
         dataset["data-blink-gradient"] = gradient
       }
-      dataset["data-blink-progressive"] = true;
+      if (progressive) {
+        dataset["data-blink-progressive"] = true;
+      }
+      dataset["data-blink-imgblock"] = true;
     }
 
     if (!initialRender && (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion)) {

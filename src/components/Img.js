@@ -4,6 +4,8 @@ import React from 'react';
 export const noBlinkloaderJs = 'Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-2.0.0.min.js" in page head.';
 export const blinkloaderVersion = '2.0.0';
 
+export const noBlinkloaderProjectId = 'Blinkloader can not render images without a project id. Make sure that all of your components are wrapped in BlinkloaderProvider with appropriate settings.';
+
 export const srcPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
 
 export let blinkloaderProjectId = '';
@@ -50,9 +52,20 @@ export default class Img extends React.Component {
 
   renderRelevantImage(cb) {
     const { validSdk, imgPlaceholder } = this.state;
-    const { src } = this.props;
+    const { src, progressive } = this.props;
     const { setSrcValue, setState } = this;
-    if (!validSdk) {
+
+    const projectId = blinkloaderProjectId;
+    const token = blinkloaderToken;
+
+    let noProjectId = false;
+
+    if (projectId === "") {
+      console.error(noBlinkloaderProjectId);
+      noProjectId = true;
+    }
+
+    if (!validSdk || noProjectId) {
       setSrcValue(src);
       return
     }
@@ -61,17 +74,25 @@ export default class Img extends React.Component {
       return;
     }
     this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
-    const projectId = blinkloaderProjectId;
-    const token = blinkloaderToken;
     const width = Blinkloader.determineDivWidth(imgPlaceholder);
     const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
     const that = this;
+
+    let imageSet = false;
+    if (progressive) {
+      Blinkloader.getSvgImage(imagePayload).then(function(url) {
+        if (!imageSet) {
+          setSrcValue(url);
+        }
+      }).catch(function(){});
+    }
+
     let cbDone = false;
     const setImgFunc = function(url) {
+      imageSet = true;
       if (!cbDone && cb) {
         cb();
       }
-
       setSrcValue(url);
     }
     Blinkloader.getImage(imagePayload).then(function(url) {
@@ -113,6 +134,7 @@ export default class Img extends React.Component {
       style,
       src,
       lazyload,
+      progressive,
       ...inheritedProps
     } = this.props;
 
@@ -129,6 +151,9 @@ export default class Img extends React.Component {
       dataset["data-blink-src"] = src;
       if (lazyload) {
         dataset["data-blink-lazyload"] = true;
+      }
+      if (progressive) {
+        dataset["data-blink-progressive"] = true;
       }
     }
 
