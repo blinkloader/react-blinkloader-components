@@ -5,7 +5,7 @@ import { mount, configure } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 configure({ adapter: new Adapter() });
 
-import ImgBlock from '../src/components/ImgBlock';
+import ImgBlock from '../src/components/ImgBlock.js';
 import { setup } from './pseudo_window';
 
 describe('ImgBlock component', function () {

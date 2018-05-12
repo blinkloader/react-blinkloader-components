@@ -8,7 +8,7 @@ import {
   blinkloaderProjectId,
   blinkloaderToken,
   srcPlaceholder
-} from './Img';
+} from './Img.js';
 
 export default class ImgBlock extends React.Component {
   constructor(props) {

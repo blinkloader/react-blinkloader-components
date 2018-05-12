@@ -5,7 +5,7 @@ import { mount, configure } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 configure({ adapter: new Adapter() });
 
-import Img from '../src/components/Img';
+import Img from '../src/components/Img.js'
 import { setup } from './pseudo_window';
 
 describe('Img component', function () {

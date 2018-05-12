@@ -4,8 +4,6 @@ const request = require('sync-request');
 const { JSDOM } = jsdom;
 
 const window = new JSDOM(`<!DOCTYPE html>
-  <head>
-  </head>
   <body>
   </body>
   </html>`, {
