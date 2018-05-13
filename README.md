@@ -1,11 +1,9 @@
 # react-blinkloader-components
 React components for Blinkloader
 
-kudos to Stripe for inspiration (https://github.com/stripe/react-stripe-elements)
-
 ## components
 
-### `<Img>`
+### `<Img/>`
 Props:
 
 - src (holds image URL)
@@ -19,7 +17,7 @@ Example:
 <Img src="some-src" lazyload={true} progressive={true} />
 ```
 
-### `<ImgBlock>`
+### `<ImgBlock/>`
 Props:
 
  - src (holds image url)
@@ -32,7 +30,7 @@ Example:
 <ImgBlock src="some-src" lazyload={true} progressive={true} />
 ```
 
-### `<Background>`
+### `<Background/>`
 Props:
 
  - src (holds image url)

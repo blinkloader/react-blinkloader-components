@@ -1,20 +1,16 @@
 import React from 'react';
 
-// Important
-export const noBlinkloaderJs = 'Blinkloader Error! Couldn\'t optimize assets: missing "https://cdn.blinkloader.com/blinkloader-2.0.0.min.js" in page head.';
-export const blinkloaderVersion = '2.0.0';
+import {
+  blinkloaderProjectId,
+  blinkloaderToken
+} from './Provider';
 
-export const noBlinkloaderProjectId = 'Blinkloader can not render images without a project id. Make sure that all of your components are wrapped in BlinkloaderProvider with appropriate settings.';
-
-export const srcPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
-
-export let blinkloaderProjectId = '';
-export let blinkloaderToken = '';
-
-export const setBlinkloaderCreds = (pId, t) => {
-  blinkloaderProjectId = pId;
-  blinkloaderToken = t;
-}
+import {
+  noBlinkloaderJs,
+  blinkloaderVersion,
+  noBlinkloaderProjectId,
+  srcPlaceholder
+} from '../misc';
 
 export default class Img extends React.Component {
   constructor(props) {
@@ -97,20 +93,6 @@ export default class Img extends React.Component {
     }
     Blinkloader.getImage(imagePayload).then(function(url) {
       setImgFunc(url);
-      
-      let prevWidth = Blinkloader.getDivWidth(imgPlaceholder); 
-      let curWidth = prevWidth;  
-      Blinkloader.resizer.addFunc(function() { 
-        curWidth = Blinkloader.getDiv(imgPlaceholder);  
-        if (curWidth > prevWidth) {  
-          imagePayload.width = curWidth; 
-          Blinkloader.getImage(imagePayload).then(function(url) {  
-            setImgFunc(url);  
-            prevWidth = curWidth;  
-          }).catch(function() {}); 
-        }  
-      });
-
     }).catch(function(err){
       setImgFunc(src);
     })

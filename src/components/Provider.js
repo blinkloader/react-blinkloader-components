@@ -1,8 +1,14 @@
 import React from "react";  
 
-import { blinkloaderVersion, setBlinkloaderCreds } from './Img'; 
+export let blinkloaderProjectId = '';
+export let blinkloaderToken = '';
 
-class BlinkloaderProvider extends React.Component {  
+export const setBlinkloaderCreds = (pId, t) => {
+  blinkloaderProjectId = pId;
+  blinkloaderToken = t;
+}
+
+export default class BlinkloaderProvider extends React.Component {  
   constructor(props) {
     super(props);
     this.setCreds = this.setCreds.bind(this);
@@ -18,5 +24,3 @@ class BlinkloaderProvider extends React.Component {
     return this.props.children;  
   }  
 }  
-
-export default BlinkloaderProvider;

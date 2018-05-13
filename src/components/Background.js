@@ -1,14 +1,16 @@
 import React from 'react';
 
 import {
-  noBlinkloaderJs,
-  noBlinkloaderProjectId,
-  blinkloaderVersion,
-  setBlinkloaderCreds,
   blinkloaderProjectId,
-  blinkloaderToken,
+  blinkloaderToken
+} from './Provider';
+
+import {
+  noBlinkloaderJs,
+  blinkloaderVersion,
+  noBlinkloaderProjectId,
   srcPlaceholder
-} from './Img.js';
+} from '../misc';
 
 export default class Background extends React.Component {
   constructor(props) {
