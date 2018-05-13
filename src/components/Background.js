@@ -19,9 +19,6 @@ export default class Background extends React.Component {
       disableFurtherImgRequests: false,
       width: null,
       height: null,
-      backgroundSize: null,
-      backgroundPosition: null,
-      backgroundRepeat: null,
       imgSrc: null,
       validSdk: null
     };
@@ -115,10 +112,6 @@ export default class Background extends React.Component {
     const {imgPlaceholder} = this.state;
 
     if (!this.state.initialRender && imgPlaceholder && typeof Blinkloader !== 'undefined') {
-      this.state.backgroundSize = Blinkloader.determineBgSize(imgPlaceholder);
-      this.state.backgroundPosition = Blinkloader.determineBgPosition(imgPlaceholder);
-      this.state.backgroundRepeat = Blinkloader.determineBgRepeat(imgPlaceholder);
-
       let width = Blinkloader.getDivWidth(imgPlaceholder);
       if (width <= 1) {
         width = Blinkloader.determineDivWidth(imgPlaceholder);
@@ -168,9 +161,6 @@ export default class Background extends React.Component {
       initialRender,
       width,
       height,
-      backgroundSize,
-      backgroundPosition,
-      backgroundRepeat,
       imgSrc,
       imgPlaceholder,
       validSdk
@@ -184,9 +174,9 @@ export default class Background extends React.Component {
       if (height > 1) {
         styles.height = height;
       }
-      styles.backgroundRepeat = backgroundRepeat || 'no-repeat';
-      styles.backgrondPosition = backgroundPosition || 'center';
-      styles.backgroundSize = backgroundSize || 'cover';
+      styles.backgroundRepeat = 'no-repeat';
+      styles.backgrondPosition = 'center';
+      styles.backgroundSize = 'cover';
       styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
     }
 

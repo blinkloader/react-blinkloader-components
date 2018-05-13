@@ -23,9 +23,6 @@ export default class ImgBlock extends React.Component {
       svgImgSrc: null,
       svgImgSet: false,
       imgFadeoutClass: null,
-      backgroundSize: null,
-      backgroundPosition: null,
-      backgroundRepaat: null,
       validSdk: null
     };
 
@@ -133,10 +130,6 @@ export default class ImgBlock extends React.Component {
     const {imgPlaceholder} = this.state;
 
     if (!this.state.initialRender && imgPlaceholder && typeof Blinkloader !== 'undefined') {
-      this.state.backgroundSize = Blinkloader.determineBgSize(imgPlaceholder);
-      this.state.backgroundPosition = Blinkloader.determineBgPosition(imgPlaceholder);
-      this.state.backgroundRepeat = Blinkloader.determineBgRepeat(imgPlaceholder);
-
       let width = Blinkloader.getDivWidth(imgPlaceholder);
       if (width <= 1) {
         width = Blinkloader.determineDivWidth(imgPlaceholder);
@@ -194,9 +187,6 @@ export default class ImgBlock extends React.Component {
       svgImgSrc,
       svgImgSet,
       imgFadeoutClass,
-      backgroundPosition,
-      backgroundRepeat,
-      backgroundSize,
       validSdk
     } = this.state
 
@@ -209,9 +199,9 @@ export default class ImgBlock extends React.Component {
         styles.height = height;
       }
 
-      styles.backgroundSize = backgroundSize || 'cover';
-      styles.backgroundPosition = backgroundPosition || 'center';
-      styles.backgroundRepeat = backgroundRepeat || 'no-repeat';
+      styles.backgroundSize = 'cover';
+      styles.backgroundPosition = 'center';
+      styles.backgroundRepeat = 'no-repeat';
       styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
     }
 
