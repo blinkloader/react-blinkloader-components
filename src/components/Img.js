@@ -43,7 +43,7 @@ export default class Img extends React.Component {
     }
 
     this.state.initialRender = false;
-    if (lazyload == true && validSdk) {
+    if (lazyload && validSdk) {
       Blinkloader.registerImage(this.renderRelevantImage, imgPlaceholder);
       return
     }
@@ -90,13 +90,27 @@ export default class Img extends React.Component {
     let cbDone = false;
     const setImgFunc = function(url) {
       imageSet = true;
-      if (!cbDone && cb) {
+      if (cb && !cbDone) {
         cb();
       }
       setSrcValue(url);
     }
     Blinkloader.getImage(imagePayload).then(function(url) {
       setImgFunc(url);
+      
+      let prevWidth = Blinkloader.getDivWidth(imgPlaceholder); 
+      let curWidth = prevWidth;  
+      Blinkloader.resizer.addFunc(function() { 
+        curWidth = Blinkloader.getDiv(imgPlaceholder);  
+        if (curWidth > prevWidth) {  
+          imagePayload.width = curWidth; 
+          Blinkloader.getImage(imagePayload).then(function(url) {  
+            setImgFunc(url);  
+            prevWidth = curWidth;  
+          }).catch(function() {}); 
+        }  
+      });
+
     }).catch(function(err){
       setImgFunc(src);
     })
