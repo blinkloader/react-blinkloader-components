@@ -22,7 +22,7 @@
   },
   "keywords": [],
   "author": "Blinkloader (https://blinkloader.com)",
-  "license": "MIT",
+  "license": "Apache 2.0",
   "dependencies": {
     "dotenv-webpack": "^1.5.4",
     "prop-types": "^15.6.0"
