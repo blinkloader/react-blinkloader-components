@@ -119,7 +119,7 @@ export default class Img extends React.Component {
     }
     this.state.validSdk = validSdk;
     this.state.imgPlaceholder = el;
-    if (el && el.dataset && !el.dataset.blinkSrc) {
+    if (el && el.dataset && !el.dataset.blinkSrc && !el.dataset.blinkDefer) {
       this._isRendered = true;
     }
   }
@@ -131,6 +131,7 @@ export default class Img extends React.Component {
       src,
       lazyload,
       progressive,
+      defer,
       ...inheritedProps
     } = this.props;
 
@@ -150,6 +151,9 @@ export default class Img extends React.Component {
       }
       if (progressive) {
         dataset["data-blink-progressive"] = true;
+      }
+      if (defer) {
+        dataset["data-blink-defer"] = true;
       }
     }
 
