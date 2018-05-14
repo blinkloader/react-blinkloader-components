@@ -19,8 +19,6 @@ export default class Background extends React.Component {
       initialRender: true,
       imgPlaceholder: null,
       disableFurtherImgRequests: false,
-      width: null,
-      height: null,
       imgSrc: null,
       validSdk: null
     };
@@ -113,19 +111,6 @@ export default class Background extends React.Component {
 
     const {imgPlaceholder} = this.state;
 
-    if (!this.state.initialRender && imgPlaceholder && typeof Blinkloader !== 'undefined') {
-      let width = Blinkloader.getDivWidth(imgPlaceholder);
-      if (width <= 1) {
-        width = Blinkloader.determineDivWidth(imgPlaceholder);
-        this.state.width = width;
-      }
-      let height = Blinkloader.getDivHeight(imgPlaceholder);
-      if (height <= 1) {
-        height = Blinkloader.determineDivHeight(url, width, imgPlaceholder);
-        this.state.height = height;
-      }
-    }
-
     this.setState({
       imgSrc: url
     });
@@ -161,8 +146,6 @@ export default class Background extends React.Component {
 
     const {
       initialRender,
-      width,
-      height,
       imgSrc,
       imgPlaceholder,
       validSdk
@@ -170,12 +153,6 @@ export default class Background extends React.Component {
 
     const styles = {...style}
     if (!initialRender) {
-      if (width > 1) {
-        styles.width = width;
-      }
-      if (height > 1) {
-        styles.height = height;
-      }
       styles.backgroundRepeat = 'no-repeat';
       styles.backgrondPosition = 'center';
       styles.backgroundSize = 'cover';
