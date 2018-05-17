@@ -2,7 +2,9 @@ import React from 'react';
 
 import {
   blinkloaderProjectId,
-  blinkloaderToken
+  blinkloaderToken,
+  blinkloaderApiDomain,
+  blinkloaderCdnDomain
 } from './Provider';
 
 import {
@@ -78,6 +80,13 @@ export default class Background extends React.Component {
 
     const width = Blinkloader.determineDivWidth(imgPlaceholder);
     const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
+
+    if (blinkloaderApiDomain) {
+      imagePayload.apiDomain = blinkloaderApiDomain;
+    }
+    if (blinkloaderCdnDomain) {
+      imagePayload.cdnDomain = blinkloaderCdnDomain;
+    }
 
     let imageSet = false;
     if (progressive) {
