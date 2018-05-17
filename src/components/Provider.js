@@ -7,7 +7,7 @@ export let blinkloaderApiDomain = '';
 export let blinkloaderCdnDomain = '';
 
 
-export const setBlinkloaderCreds = (pId, t, apiE, cdnE) => {
+export const setBlinkloaderConfigs = (pId, t, apiE, cdnE) => {
   blinkloaderProjectId = pId;
   blinkloaderToken = t;
   blinkloaderApiDomain = apiE;
