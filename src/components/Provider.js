@@ -7,13 +7,6 @@ export let blinkloaderApiDomain = '';
 export let blinkloaderCdnDomain = '';
 
 
-export const setBlinkloaderConfigs = (pId, t, apiE, cdnE) => {
-  blinkloaderProjectId = pId;
-  blinkloaderToken = t;
-  blinkloaderApiDomain = apiE;
-  blinkloaderCdnDomain = cdnE;
-}
-
 export default class BlinkloaderProvider extends React.Component {  
   constructor(props) {
     super(props);
@@ -22,7 +15,10 @@ export default class BlinkloaderProvider extends React.Component {
 
   setCreds() {
     const { projectId, token, apiDomain, cdnDomain } = this.props;
-    setBlinkloaderConfigs(projectId, token, apiDomain, cdnDomain);
+    blinkloaderProjectId = projectId;
+    blinkloaderToken = token;
+    blinkloaderApiDomain = apiDomain;
+    blinkloaderCdnDomain = cdnDomain;
   }
 
   render() { 
