@@ -160,7 +160,11 @@ export default class Background extends React.Component {
       validSdk
     } = this.state
 
+
     const styles = {...style}
+    if (gradient) {
+      styles.backgroundImage = gradient;
+    }
     if (!initialRender) {
       styles.backgroundRepeat = 'no-repeat';
       styles.backgrondPosition = 'center';
