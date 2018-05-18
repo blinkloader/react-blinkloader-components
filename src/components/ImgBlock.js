@@ -20,8 +20,6 @@ export default class ImgBlock extends React.Component {
     this.state = {
       initialRender: true,
       imgPlaceholder: null,
-      width: null,
-      height: null,
       disableFurtherImgRequests: false,
       imgSrc: null,
       svgImgSrc: null,
@@ -141,15 +139,11 @@ export default class ImgBlock extends React.Component {
     const {imgPlaceholder} = this.state;
 
     if (!this.state.initialRender && imgPlaceholder && typeof Blinkloader !== 'undefined') {
+      const { src } = this.props;
       let width = Blinkloader.getDivWidth(imgPlaceholder);
-      if (width <= 1) {
-        width = Blinkloader.determineDivWidth(imgPlaceholder);
-        this.state.width = width;
-      }
       let height = Blinkloader.getDivHeight(imgPlaceholder);
-      if (height <= 1) {
-        height = Blinkloader.determineDivHeight(url, width, imgPlaceholder);
-        this.state.height = height;
+      if (width <= 1 || height <= 1) {
+        Blinkloader.invisibleImgWarn(src);
       }
     }
 
@@ -191,8 +185,6 @@ export default class ImgBlock extends React.Component {
     const {
       initialRender,
       imgPlaceholder,
-      width,
-      height,
       disableFurtherImgRequests,
       imgSrc,
       svgImgSrc,
@@ -203,13 +195,6 @@ export default class ImgBlock extends React.Component {
 
     const styles = {...style}
     if (!initialRender) {
-      if (width > 1) {
-        styles.width = width 
-      }
-      if (height > 1) {
-        styles.height = height;
-      }
-
       styles.backgroundSize = 'cover';
       styles.backgroundPosition = 'center';
       styles.backgroundRepeat = 'no-repeat';
