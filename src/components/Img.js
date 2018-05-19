@@ -72,7 +72,11 @@ export default class Img extends React.Component {
       return;
     }
     this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
-    const width = Blinkloader.determineDivWidth(imgPlaceholder);
+
+    let width = Blinkloader.getDivWidth(imgPlaceholder);
+    if (width <= 1) {
+      width = Blinkloader.determineDivWidth(imgPlaceholder);
+    }
     const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
     const that = this;
 

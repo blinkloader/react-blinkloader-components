@@ -81,7 +81,10 @@ export default class ImgBlock extends React.Component {
 
     this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
 
-    const width = Blinkloader.determineDivWidth(imgPlaceholder);
+    let width = Blinkloader.getDivWidth(imgPlaceholder);
+    if (width <= 1) {
+      width = Blinkloader.determineDivWidth(imgPlaceholder);
+    }
     const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
 
     if (blinkloaderApiDomain) {
