@@ -216,7 +216,7 @@ export default class ImgBlock extends React.Component {
       if (progressive) {
         dataset["data-blink-progressive"] = true;
       }
-      dataset["data-blink-imgblock"] = true;
+      dataset["data-blink-image-block"] = true;
     }
 
     if (!initialRender && (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion)) {
