@@ -14,15 +14,20 @@ import {
   srcPlaceholder
 } from '../misc';
 
-export default class Img extends React.Component {
+export default class ImgBlock extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       initialRender: true,
       imgPlaceholder: null,
+      disableFurtherImgRequests: false,
       imgSrc: null,
+      svgImgSrc: null,
+      svgImgSet: false,
+      imgFadeoutClass: null,
       validSdk: null
     };
+
     this.renderRelevantImage = this.renderRelevantImage.bind(this);
     this.setSrcValue = this.setSrcValue.bind(this);
     this.setImagePlaceholder = this.setImagePlaceholder.bind(this);
@@ -41,10 +46,11 @@ export default class Img extends React.Component {
     }
 
     this.state.initialRender = false;
-    if (lazyload && validSdk) {
+    if (lazyload == true && validSdk) {
       Blinkloader.registerImage(this.renderRelevantImage, imgPlaceholder);
       return
     }
+
     this.renderRelevantImage();
   }
 
@@ -58,7 +64,7 @@ export default class Img extends React.Component {
 
     let noProjectId = false;
 
-    if (projectId === "") {
+    if(projectId === "") {
       console.error(noBlinkloaderProjectId);
       noProjectId = true;
     }
@@ -67,10 +73,12 @@ export default class Img extends React.Component {
       setSrcValue(src);
       return
     }
+
     const { disableFurtherImgRequests } = this.state;
     if (disableFurtherImgRequests) {
       return;
     }
+
     this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
 
     let width = Blinkloader.getDivWidth(imgPlaceholder);
@@ -78,7 +86,6 @@ export default class Img extends React.Component {
       width = Blinkloader.determineDivWidth(imgPlaceholder);
     }
     const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
-    const that = this;
 
     if (blinkloaderApiDomain) {
       imagePayload.apiDomain = blinkloaderApiDomain;
@@ -87,10 +94,14 @@ export default class Img extends React.Component {
       imagePayload.cdnDomain = blinkloaderCdnDomain;
     }
 
+    const that = this;
+
     let imageSet = false;
     if (progressive) {
       Blinkloader.getSvgImage(imagePayload).then(function(url) {
         if (!imageSet) {
+          that.state.svgImgSrc = url;
+          that.state.svgImgSet = true;
           setSrcValue(url);
         }
       }).catch(function(){});
@@ -98,13 +109,25 @@ export default class Img extends React.Component {
 
     let cbDone = false;
     const setImgFunc = function(url) {
-      imageSet = true;
-      if (cb && !cbDone) {
+      imageSet= true;
+      if (!cbDone && cb) {
         cb();
       }
       setSrcValue(url);
     }
+
     Blinkloader.getImage(imagePayload).then(function(url) {
+      if (that.state.svgImgSet) {
+        Blinkloader.stylePseudoEl(url, that.state.svgImgSrc, function(imgClass) {
+          if (!imgClass) {
+            return;
+          }
+
+          that.state.imgFadeoutClass = imgClass;
+          setImgFunc(url);
+        });
+        return;
+      }
       setImgFunc(url);
     }).catch(function(err){
       setImgFunc(src);
@@ -114,6 +137,17 @@ export default class Img extends React.Component {
   setSrcValue(url) {
     if (!this._isMounted) {
       return;
+    }
+
+    const {imgPlaceholder} = this.state;
+
+    if (!this.state.initialRender && imgPlaceholder && typeof Blinkloader !== 'undefined') {
+      const { src } = this.props;
+      let width = Blinkloader.getDivWidth(imgPlaceholder);
+      let height = Blinkloader.getDivHeight(imgPlaceholder);
+      if (width <= 1 || height <= 1) {
+        Blinkloader.invisibleImgWarn(src);
+      }
     }
 
     this.setState({
@@ -132,7 +166,7 @@ export default class Img extends React.Component {
     }
     this.state.validSdk = validSdk;
     this.state.imgPlaceholder = el;
-    if (el && el.dataset && !el.dataset.blinkSrc && !el.dataset.blinkDefer) {
+    if (el && el.dataset && !el.dataset.blinkSrc) {
       this._isRendered = true;
     }
   }
@@ -144,17 +178,31 @@ export default class Img extends React.Component {
       src,
       lazyload,
       progressive,
-      defer,
+      gradient,
+      children,
       ...inheritedProps
     } = this.props;
 
+    const propWidth = this.props.width;
+
     const {
       initialRender,
-      imgSrc,
       imgPlaceholder,
+      disableFurtherImgRequests,
+      imgSrc,
+      svgImgSrc,
+      svgImgSet,
+      imgFadeoutClass,
+      validSdk
     } = this.state
 
-    const srcPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
+    const styles = {...style}
+    if (!initialRender) {
+      styles.backgroundSize = 'cover';
+      styles.backgroundPosition = 'center';
+      styles.backgroundRepeat = 'no-repeat';
+      styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
+    }
 
     const dataset = {};
     if (initialRender) {
@@ -162,40 +210,55 @@ export default class Img extends React.Component {
       if (lazyload) {
         dataset["data-blink-lazyload"] = true;
       }
+      if (gradient) {
+        dataset["data-blink-gradient"] = gradient
+      }
       if (progressive) {
         dataset["data-blink-progressive"] = true;
       }
-      if (defer) {
-        dataset["data-blink-defer"] = true;
-      }
+      dataset["data-blink-image-block"] = true;
     }
 
     if (!initialRender && (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion)) {
       console.error(noBlinkloaderJs);
-      return <img
-        src={src}
-        style={{...style}}
-        className={(className || '')}
-        {...inheritedProps}
-      />
-    }
 
-    if (!initialRender && imgSrc) {
-      return <img
-        src={imgSrc}
-        style={{...style}}
+      return <div
+        style={{...styles}}
         ref={this.setImagePlaceholder}
         className={className || ''}
         {...inheritedProps}
-      />;
+      ></div>;
     }
-    return <img
-      src={srcPlaceholder}
+
+    if (!initialRender) {
+      if (!imgFadeoutClass) {
+        return <div
+          style={{...styles}}
+          className={(className || '')}
+          {...inheritedProps}
+        ></div>
+      }
+
+      delete styles.backgroundSize;
+      delete styles.backgroundPosition;
+      delete styles.backgroundRepeat;
+      delete styles.backgroundImage;
+      return <div
+        style={{
+          position: 'relative',
+          ...styles
+        }}
+        className={(className || '') + ` blnk-image ${imgFadeoutClass}`}
+        {...inheritedProps}
+      ></div>;
+    }
+    
+    return <div
       {...dataset}
-      style={{...style}}
+      style={{...styles}}
       ref={this.setImagePlaceholder}
       className={className || ''}
       {...inheritedProps}
-    />;
+    ></div>;
   }
 };

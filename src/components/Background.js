@@ -14,15 +14,17 @@ import {
   srcPlaceholder
 } from '../misc';
 
-export default class Img extends React.Component {
+export default class Background extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       initialRender: true,
       imgPlaceholder: null,
+      disableFurtherImgRequests: false,
       imgSrc: null,
       validSdk: null
     };
+
     this.renderRelevantImage = this.renderRelevantImage.bind(this);
     this.setSrcValue = this.setSrcValue.bind(this);
     this.setImagePlaceholder = this.setImagePlaceholder.bind(this);
@@ -41,10 +43,11 @@ export default class Img extends React.Component {
     }
 
     this.state.initialRender = false;
-    if (lazyload && validSdk) {
+    if (lazyload == true && validSdk) {
       Blinkloader.registerImage(this.renderRelevantImage, imgPlaceholder);
       return
     }
+
     this.renderRelevantImage();
   }
 
@@ -67,10 +70,12 @@ export default class Img extends React.Component {
       setSrcValue(src);
       return
     }
+
     const { disableFurtherImgRequests } = this.state;
     if (disableFurtherImgRequests) {
       return;
     }
+
     this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
 
     let width = Blinkloader.getDivWidth(imgPlaceholder);
@@ -78,7 +83,6 @@ export default class Img extends React.Component {
       width = Blinkloader.determineDivWidth(imgPlaceholder);
     }
     const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
-    const that = this;
 
     if (blinkloaderApiDomain) {
       imagePayload.apiDomain = blinkloaderApiDomain;
@@ -99,11 +103,12 @@ export default class Img extends React.Component {
     let cbDone = false;
     const setImgFunc = function(url) {
       imageSet = true;
-      if (cb && !cbDone) {
+      if (!cbDone && cb) {
         cb();
       }
       setSrcValue(url);
     }
+
     Blinkloader.getImage(imagePayload).then(function(url) {
       setImgFunc(url);
     }).catch(function(err){
@@ -115,6 +120,8 @@ export default class Img extends React.Component {
     if (!this._isMounted) {
       return;
     }
+
+    const {imgPlaceholder} = this.state;
 
     this.setState({
       imgSrc: url
@@ -132,7 +139,7 @@ export default class Img extends React.Component {
     }
     this.state.validSdk = validSdk;
     this.state.imgPlaceholder = el;
-    if (el && el.dataset && !el.dataset.blinkSrc && !el.dataset.blinkDefer) {
+    if (el && el.dataset && !el.dataset.blinkSrc) {
       this._isRendered = true;
     }
   }
@@ -144,7 +151,8 @@ export default class Img extends React.Component {
       src,
       lazyload,
       progressive,
-      defer,
+      gradient,
+      children,
       ...inheritedProps
     } = this.props;
 
@@ -152,9 +160,20 @@ export default class Img extends React.Component {
       initialRender,
       imgSrc,
       imgPlaceholder,
+      validSdk
     } = this.state
 
-    const srcPlaceholder = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAABnRSTlMA/wD/AP83WBt9AAAADElEQVQI12P4//8/AAX+Av7czFnnAAAAAElFTkSuQmCC';
+
+    const styles = {...style}
+    if (gradient) {
+      styles.backgroundImage = gradient;
+    }
+    if (!initialRender) {
+      styles.backgroundRepeat = 'no-repeat';
+      styles.backgrondPosition = 'center';
+      styles.backgroundSize = 'cover';
+      styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
+    }
 
     const dataset = {};
     if (initialRender) {
@@ -162,40 +181,40 @@ export default class Img extends React.Component {
       if (lazyload) {
         dataset["data-blink-lazyload"] = true;
       }
+      if (gradient) {
+        dataset["data-blink-gradient"] = gradient
+      }
       if (progressive) {
         dataset["data-blink-progressive"] = true;
       }
-      if (defer) {
-        dataset["data-blink-defer"] = true;
-      }
+      dataset["data-blink-background"] = true;
     }
 
     if (!initialRender && (typeof Blinkloader === 'undefined' || Blinkloader.version !== blinkloaderVersion)) {
       console.error(noBlinkloaderJs);
-      return <img
-        src={src}
-        style={{...style}}
-        className={(className || '')}
-        {...inheritedProps}
-      />
-    }
-
-    if (!initialRender && imgSrc) {
-      return <img
-        src={imgSrc}
-        style={{...style}}
+      return <div
+        style={{...styles}}
         ref={this.setImagePlaceholder}
         className={className || ''}
         {...inheritedProps}
-      />;
+      >{children}</div>;
     }
-    return <img
-      src={srcPlaceholder}
+    
+    if (!initialRender) {
+      return <div
+        style={{...styles}}
+        ref={this.setImagePlaceholder}
+        className={className || ''}
+        {...inheritedProps}
+      >{children}</div>;
+    }
+
+    return <div
+      style={{...styles}}
       {...dataset}
-      style={{...style}}
       ref={this.setImagePlaceholder}
       className={className || ''}
       {...inheritedProps}
-    />;
+    >{children}</div>;
   }
 };
