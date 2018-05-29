@@ -1,6 +1,6 @@
 {
-  "name": "react-blinkloader-components",
-  "version": "2.0.1",
+  "name": "@blinkloader/react-blinkloader-components",
+  "version": "2.0.2",
   "description": "React components for Blinkloader",
   "main": "./lib/index.js",
   "module": "es/index.js",
