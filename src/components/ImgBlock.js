@@ -98,13 +98,13 @@ export default class ImgBlock extends React.Component {
 
     let imageSet = false;
     if (progressive) {
-      Blinkloader.getSvgImage(imagePayload).then(function(url) {
+      Blinkloader.getSvgImage(imagePayload, function(url) {
         if (!imageSet) {
           that.state.svgImgSrc = url;
           that.state.svgImgSet = true;
           setSrcValue(url);
         }
-      }).catch(function(){});
+      }, function(){});
     }
 
     let cbDone = false;
@@ -116,7 +116,7 @@ export default class ImgBlock extends React.Component {
       setSrcValue(url);
     }
 
-    Blinkloader.getImage(imagePayload).then(function(url) {
+    Blinkloader.getImage(imagePayload, function(url) {
       if (that.state.svgImgSet) {
         Blinkloader.stylePseudoEl(url, that.state.svgImgSrc, function(imgClass) {
           if (!imgClass) {
@@ -129,9 +129,9 @@ export default class ImgBlock extends React.Component {
         return;
       }
       setImgFunc(url);
-    }).catch(function(err){
+    }, function(err){
       setImgFunc(src);
-    })
+    });
   }
 
   setSrcValue(url) {

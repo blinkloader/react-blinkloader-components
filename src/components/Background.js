@@ -93,11 +93,11 @@ export default class Background extends React.Component {
 
     let imageSet = false;
     if (progressive) {
-      Blinkloader.getSvgImage(imagePayload).then(function(url) {
+      Blinkloader.getSvgImage(imagePayload, function(url) {
         if (!imageSet) {
           setSrcValue(url);
         }
-      }).catch(function(){});
+      }, function(){});
     }
 
     let cbDone = false;
@@ -109,11 +109,11 @@ export default class Background extends React.Component {
       setSrcValue(url);
     }
 
-    Blinkloader.getImage(imagePayload).then(function(url) {
+    Blinkloader.getImage(imagePayload, function(url) {
       setImgFunc(url);
-    }).catch(function(err){
+    }, function(err){
       setImgFunc(src);
-    })
+    });
   }
 
   setSrcValue(url) {
