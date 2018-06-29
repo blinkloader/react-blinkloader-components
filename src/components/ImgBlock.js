@@ -235,6 +235,7 @@ export default class ImgBlock extends React.Component {
         return <div
           style={{...styles}}
           className={(className || '')}
+          ref={this.setImagePlaceholder}
           {...inheritedProps}
         ></div>
       }
@@ -248,6 +249,7 @@ export default class ImgBlock extends React.Component {
           position: 'relative',
           ...styles
         }}
+        ref={this.setImagePlaceholder}
         className={(className || '') + ` blnk-image ${imgFadeoutClass}`}
         {...inheritedProps}
       ></div>;

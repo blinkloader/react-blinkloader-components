@@ -175,6 +175,7 @@ export default class Img extends React.Component {
       return <img
         src={src}
         style={{...style}}
+        ref={this.setImagePlaceholder}
         className={(className || '')}
         {...inheritedProps}
       />
