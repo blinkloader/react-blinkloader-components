@@ -1,13 +1,6 @@
 import React from 'react';
 
 import {
-  blinkloaderProjectId,
-  blinkloaderToken,
-  blinkloaderApiDomain,
-  blinkloaderCdnDomain
-} from './Provider';
-
-import {
   noBlinkloaderJs,
   blinkloaderVersion,
   noBlinkloaderProjectId,
@@ -53,20 +46,11 @@ export default class Img extends React.Component {
     const { src, progressive } = this.props;
     const { setSrcValue, setState } = this;
 
-    const projectId = blinkloaderProjectId;
-    const token = blinkloaderToken;
-
-    let noProjectId = false;
-
-    if (projectId === "") {
-      console.error(noBlinkloaderProjectId);
-      noProjectId = true;
-    }
-
-    if (!validSdk || noProjectId) {
+    if (!validSdk) {
       setSrcValue(src);
       return
     }
+
     const { disableFurtherImgRequests } = this.state;
     if (disableFurtherImgRequests) {
       return;
@@ -77,15 +61,13 @@ export default class Img extends React.Component {
     if (width <= 1) {
       width = Blinkloader.determineDivWidth(imgPlaceholder);
     }
-    const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
-    const that = this;
 
-    if (blinkloaderApiDomain) {
-      imagePayload.apiDomain = blinkloaderApiDomain;
+    const imagePayload = { width, src, pageUrl: window.location.href };
+    if (Blinkloader.prefetchList && Blinkloader.prefetchList.indexOf(src) !== -1) {
+      imagePayload.prefetch = true;
     }
-    if (blinkloaderCdnDomain) {
-      imagePayload.cdnDomain = blinkloaderCdnDomain;
-    }
+
+    const that = this;
 
     let imageSet = false;
     if (progressive) {
