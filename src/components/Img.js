@@ -63,9 +63,6 @@ export default class Img extends React.Component {
     }
 
     const imagePayload = { width, src, pageUrl: window.location.href };
-    if (Blinkloader.prefetchList && Blinkloader.prefetchList.indexOf(src) !== -1) {
-      imagePayload.prefetch = true;
-    }
 
     const that = this;
 
@@ -171,6 +168,20 @@ export default class Img extends React.Component {
         className={className || ''}
         {...inheritedProps}
       />;
+    }
+
+    // initial render
+    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === blinkloaderVersion) {
+      const imgsrc = Blinkloader.prefetchMap[src];
+      if (imgsrc) {
+        return <img
+          src={imgsrc}
+          style={{...style}}
+          ref={this.setImagePlaceholder}
+          className={className || ''}
+          {...inheritedProps}
+        />;
+      }
     }
     return <img
       src={srcPlaceholder}

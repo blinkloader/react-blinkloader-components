@@ -70,9 +70,6 @@ export default class ImgBlock extends React.Component {
     }
     
     const imagePayload = { width, src, pageUrl: window.location.href };
-    if (Blinkloader.prefetchList && Blinkloader.prefetchList.indexOf(src) !== -1) {
-      imagePayload.prefetch = true;
-    }
 
     const that = this;
 
@@ -177,12 +174,10 @@ export default class ImgBlock extends React.Component {
     } = this.state
 
     const styles = {...style}
-    if (!initialRender) {
-      styles.backgroundSize = 'cover';
-      styles.backgroundPosition = 'center';
-      styles.backgroundRepeat = 'no-repeat';
-      styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
-    }
+    styles.backgroundSize = 'cover';
+    styles.backgroundPosition = 'center';
+    styles.backgroundRepeat = 'no-repeat';
+    styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
 
     const dataset = {};
     if (initialRender) {
@@ -235,6 +230,19 @@ export default class ImgBlock extends React.Component {
       ></div>;
     }
     
+    // initial render
+    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === blinkloaderVersion) {
+      const imgsrc = Blinkloader.prefetchMap[src];
+      if (imgsrc) {
+        styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgsrc})`;
+        return <div
+          style={{...styles}}
+          className={(className || '')}
+          ref={this.setImagePlaceholder}
+          {...inheritedProps}
+        ></div>
+      }
+    }
     return <div
       {...dataset}
       style={{...styles}}
