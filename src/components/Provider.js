@@ -6,7 +6,21 @@ export default class BlinkloaderProvider extends React.Component {
   }
 
   componentDidMount() {
-    const { prefetchList } = this.props;
+    const {
+      prefetchList,
+      apiDomain,
+      cdnDomain,
+      projectId,
+      token
+    } = this.props;
+    try {
+      Blinkloader.config({
+        apiDomain: apiDomain,
+        cdnDomain: cdnDomain,
+        projectId: projectId,
+        token: token
+      });
+    } catch (e) {}
     try {
       Blinkloader.prefetch(prefetchList);
     } catch (e) {
