@@ -1,13 +1,6 @@
 import React from 'react';
 
 import {
-  blinkloaderProjectId,
-  blinkloaderToken,
-  blinkloaderApiDomain,
-  blinkloaderCdnDomain
-} from './Provider';
-
-import {
   noBlinkloaderJs,
   blinkloaderVersion,
   noBlinkloaderProjectId,
@@ -56,17 +49,7 @@ export default class Background extends React.Component {
     const { src, progressive } = this.props;
     const { setSrcValue, setState } = this;
 
-    const projectId = blinkloaderProjectId;
-    const token = blinkloaderToken;
-
-    let noProjectId = false;
-
-    if (projectId === "") {
-      console.error(noBlinkloaderProjectId);
-      noProjectId = true;
-    }
-
-    if (!validSdk || noProjectId) {
+    if (!validSdk) {
       setSrcValue(src);
       return
     }
@@ -82,14 +65,8 @@ export default class Background extends React.Component {
     if (width <= 1) {
       width = Blinkloader.determineDivWidth(imgPlaceholder);
     }
-    const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
 
-    if (blinkloaderApiDomain) {
-      imagePayload.apiDomain = blinkloaderApiDomain;
-    }
-    if (blinkloaderCdnDomain) {
-      imagePayload.cdnDomain = blinkloaderCdnDomain;
-    }
+    const imagePayload = { width, src, pageUrl: window.location.href };
 
     let imageSet = false;
     if (progressive) {
@@ -168,12 +145,10 @@ export default class Background extends React.Component {
     if (gradient) {
       styles.backgroundImage = gradient;
     }
-    if (!initialRender) {
-      styles.backgroundRepeat = 'no-repeat';
-      styles.backgrondPosition = 'center';
-      styles.backgroundSize = 'cover';
-      styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
-    }
+    styles.backgroundRepeat = 'no-repeat';
+    styles.backgrondPosition = 'center';
+    styles.backgroundSize = 'cover';
+    styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
 
     const dataset = {};
     if (initialRender) {
@@ -209,6 +184,19 @@ export default class Background extends React.Component {
       >{children}</div>;
     }
 
+    // initial render
+    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === blinkloaderVersion) {
+      const imgsrc = Blinkloader.prefetchMap[src];
+      if (imgsrc) {
+        styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgsrc})`;
+        return <div
+          style={{...styles}}
+          ref={this.setImagePlaceholder}
+          className={className || ''}
+          {...inheritedProps}
+        >{children}</div>;
+      }
+    }
     return <div
       style={{...styles}}
       {...dataset}

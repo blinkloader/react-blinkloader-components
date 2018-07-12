@@ -1,13 +1,6 @@
 import React from 'react';
 
 import {
-  blinkloaderProjectId,
-  blinkloaderToken,
-  blinkloaderApiDomain,
-  blinkloaderCdnDomain
-} from './Provider';
-
-import {
   noBlinkloaderJs,
   blinkloaderVersion,
   noBlinkloaderProjectId,
@@ -59,17 +52,7 @@ export default class ImgBlock extends React.Component {
     const { src, progressive } = this.props;
     const { setSrcValue, setState } = this;
 
-    const projectId = blinkloaderProjectId;
-    const token = blinkloaderToken;
-
-    let noProjectId = false;
-
-    if(projectId === "") {
-      console.error(noBlinkloaderProjectId);
-      noProjectId = true;
-    }
-
-    if (!validSdk || noProjectId) {
+    if (!validSdk) {
       setSrcValue(src);
       return
     }
@@ -85,14 +68,8 @@ export default class ImgBlock extends React.Component {
     if (width <= 1) {
       width = Blinkloader.determineDivWidth(imgPlaceholder);
     }
-    const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
-
-    if (blinkloaderApiDomain) {
-      imagePayload.apiDomain = blinkloaderApiDomain;
-    }
-    if (blinkloaderCdnDomain) {
-      imagePayload.cdnDomain = blinkloaderCdnDomain;
-    }
+    
+    const imagePayload = { width, src, pageUrl: window.location.href };
 
     const that = this;
 
@@ -197,12 +174,10 @@ export default class ImgBlock extends React.Component {
     } = this.state
 
     const styles = {...style}
-    if (!initialRender) {
-      styles.backgroundSize = 'cover';
-      styles.backgroundPosition = 'center';
-      styles.backgroundRepeat = 'no-repeat';
-      styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
-    }
+    styles.backgroundSize = 'cover';
+    styles.backgroundPosition = 'center';
+    styles.backgroundRepeat = 'no-repeat';
+    styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
 
     const dataset = {};
     if (initialRender) {
@@ -255,6 +230,19 @@ export default class ImgBlock extends React.Component {
       ></div>;
     }
     
+    // initial render
+    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === blinkloaderVersion) {
+      const imgsrc = Blinkloader.prefetchMap[src];
+      if (imgsrc) {
+        styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgsrc})`;
+        return <div
+          style={{...styles}}
+          className={(className || '')}
+          ref={this.setImagePlaceholder}
+          {...inheritedProps}
+        ></div>
+      }
+    }
     return <div
       {...dataset}
       style={{...styles}}
