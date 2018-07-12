@@ -24,7 +24,7 @@ export default class BlinkloaderProvider extends React.Component {
     try {
       Blinkloader.prefetch(prefetchList);
     } catch (e) {
-      console.warn("Blinkloader: couldn't prefetch images: " + prefetchList + ", probably because there is an error loading Blinkloader SDK")
+      console.warn("Blinkloader: couldn't prefetch images " + prefetchList + ", probably because there is an error loading Blinkloader SDK")
     }
   }
 
