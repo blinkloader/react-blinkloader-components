@@ -13,7 +13,6 @@ export default class Background extends React.Component {
     this.state = {
       initialRender: true,
       imgPlaceholder: null,
-      disableFurtherImgRequests: false,
       imgSrc: null,
       validSdk: null
     };
@@ -24,6 +23,9 @@ export default class Background extends React.Component {
   }
 
   componentDidMount() {
+    this._isMounted = true;
+    this.state.initialRender = false;
+
     if (this._isRendered) {
       return;
     }
@@ -35,13 +37,20 @@ export default class Background extends React.Component {
       return;
     }
 
-    this.state.initialRender = false;
     if (lazyload == true && validSdk) {
       Blinkloader.registerImage(this.renderRelevantImage, imgPlaceholder);
       return
     }
 
     this.renderRelevantImage();
+  }
+
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const {src} = nextProps;
+    const {imgSrc} = this.state;
+    if (src !== imgSrc) {
+      this.renderRelevantImage();
+    }
   }
 
   renderRelevantImage(cb) {
@@ -53,13 +62,6 @@ export default class Background extends React.Component {
       setSrcValue(src);
       return
     }
-
-    const { disableFurtherImgRequests } = this.state;
-    if (disableFurtherImgRequests) {
-      return;
-    }
-
-    this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
 
     let width = Blinkloader.getDivWidth(imgPlaceholder);
     if (width <= 1) {

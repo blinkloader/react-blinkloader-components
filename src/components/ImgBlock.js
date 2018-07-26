@@ -27,6 +27,9 @@ export default class ImgBlock extends React.Component {
   }
 
   componentDidMount() {
+    this._isMounted = true;
+    this.state.initialRender = false;
+
     if (this._isRendered) {
       return;
     }
@@ -56,13 +59,6 @@ export default class ImgBlock extends React.Component {
       setSrcValue(src);
       return
     }
-
-    const { disableFurtherImgRequests } = this.state;
-    if (disableFurtherImgRequests) {
-      return;
-    }
-
-    this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
 
     let width = Blinkloader.getDivWidth(imgPlaceholder);
     if (width <= 1) {
