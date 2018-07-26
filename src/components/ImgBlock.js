@@ -41,13 +41,20 @@ export default class ImgBlock extends React.Component {
       return;
     }
 
-    this.state.initialRender = false;
     if (lazyload == true && validSdk) {
       Blinkloader.registerImage(this.renderRelevantImage, imgPlaceholder);
       return
     }
 
     this.renderRelevantImage();
+  }
+
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const {src} = nextProps;
+    const {imgSrc} = this.state;
+    if (src !== imgSrc) {
+      this.renderRelevantImage();
+    }
   }
 
   renderRelevantImage(cb) {
