@@ -44,20 +44,22 @@ export default class Img extends React.Component {
 
   UNSAFE_componentWillReceiveProps(nextProps) {
     const {src} = nextProps;
-    const {imgSrc} = this.state;
-    if (src !== imgSrc) {
-      this.renderRelevantImage();
-    }
+    this.renderRelevantImage(null, src);
   }
 
-  renderRelevantImage(cb) {
+  renderRelevantImage(cb, newsrc) {
     const { validSdk, imgPlaceholder } = this.state;
-    const { src, progressive } = this.props;
+    const { progressive } = this.props;
     const { setSrcValue, setState } = this;
+    let src = this.props.src;
 
     if (!validSdk) {
       setSrcValue(src);
       return
+    }
+
+    if (newsrc) {
+      src = newsrc;
     }
 
     let width = Blinkloader.getDivWidth(imgPlaceholder);
