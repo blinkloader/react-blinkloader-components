@@ -1,13 +1,6 @@
 import React from 'react';
 
 import {
-  blinkloaderProjectId,
-  blinkloaderToken,
-  blinkloaderApiDomain,
-  blinkloaderCdnDomain
-} from './Provider';
-
-import {
   noBlinkloaderJs,
   blinkloaderVersion,
   noBlinkloaderProjectId,
@@ -34,6 +27,9 @@ export default class ImgBlock extends React.Component {
   }
 
   componentDidMount() {
+    this._isMounted = true;
+    this.state.initialRender = false;
+
     if (this._isRendered) {
       return;
     }
@@ -45,7 +41,6 @@ export default class ImgBlock extends React.Component {
       return;
     }
 
-    this.state.initialRender = false;
     if (lazyload == true && validSdk) {
       Blinkloader.registerImage(this.renderRelevantImage, imgPlaceholder);
       return
@@ -54,57 +49,44 @@ export default class ImgBlock extends React.Component {
     this.renderRelevantImage();
   }
 
-  renderRelevantImage(cb) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const {src} = nextProps;
+    this.renderRelevantImage(null, src);
+  }
+
+  renderRelevantImage(cb, newsrc) {
     const { validSdk, imgPlaceholder } = this.state;
-    const { src, progressive } = this.props;
+    const { progressive } = this.props;
     const { setSrcValue, setState } = this;
+    let src = this.props.src;
 
-    const projectId = blinkloaderProjectId;
-    const token = blinkloaderToken;
-
-    let noProjectId = false;
-
-    if(projectId === "") {
-      console.error(noBlinkloaderProjectId);
-      noProjectId = true;
-    }
-
-    if (!validSdk || noProjectId) {
+    if (!validSdk) {
       setSrcValue(src);
       return
     }
 
-    const { disableFurtherImgRequests } = this.state;
-    if (disableFurtherImgRequests) {
-      return;
+    if (newsrc) {
+      src = newsrc;
     }
-
-    this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
 
     let width = Blinkloader.getDivWidth(imgPlaceholder);
     if (width <= 1) {
       width = Blinkloader.determineDivWidth(imgPlaceholder);
     }
-    const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
-
-    if (blinkloaderApiDomain) {
-      imagePayload.apiDomain = blinkloaderApiDomain;
-    }
-    if (blinkloaderCdnDomain) {
-      imagePayload.cdnDomain = blinkloaderCdnDomain;
-    }
+    
+    const imagePayload = { width, src, pageUrl: window.location.href };
 
     const that = this;
 
     let imageSet = false;
     if (progressive) {
-      Blinkloader.getSvgImage(imagePayload).then(function(url) {
+      Blinkloader.getSvgImage(imagePayload, function(url) {
         if (!imageSet) {
           that.state.svgImgSrc = url;
           that.state.svgImgSet = true;
           setSrcValue(url);
         }
-      }).catch(function(){});
+      }, function(){});
     }
 
     let cbDone = false;
@@ -116,7 +98,7 @@ export default class ImgBlock extends React.Component {
       setSrcValue(url);
     }
 
-    Blinkloader.getImage(imagePayload).then(function(url) {
+    Blinkloader.getImage(imagePayload, function(url) {
       if (that.state.svgImgSet) {
         Blinkloader.stylePseudoEl(url, that.state.svgImgSrc, function(imgClass) {
           if (!imgClass) {
@@ -129,9 +111,9 @@ export default class ImgBlock extends React.Component {
         return;
       }
       setImgFunc(url);
-    }).catch(function(err){
+    }, function(err){
       setImgFunc(src);
-    })
+    });
   }
 
   setSrcValue(url) {
@@ -197,12 +179,10 @@ export default class ImgBlock extends React.Component {
     } = this.state
 
     const styles = {...style}
-    if (!initialRender) {
-      styles.backgroundSize = 'cover';
-      styles.backgroundPosition = 'center';
-      styles.backgroundRepeat = 'no-repeat';
-      styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
-    }
+    styles.backgroundSize = 'cover';
+    styles.backgroundPosition = 'center';
+    styles.backgroundRepeat = 'no-repeat';
+    styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgSrc || srcPlaceholder})`;
 
     const dataset = {};
     if (initialRender) {
@@ -235,6 +215,7 @@ export default class ImgBlock extends React.Component {
         return <div
           style={{...styles}}
           className={(className || '')}
+          ref={this.setImagePlaceholder}
           {...inheritedProps}
         ></div>
       }
@@ -248,11 +229,25 @@ export default class ImgBlock extends React.Component {
           position: 'relative',
           ...styles
         }}
+        ref={this.setImagePlaceholder}
         className={(className || '') + ` blnk-image ${imgFadeoutClass}`}
         {...inheritedProps}
       ></div>;
     }
     
+    // initial render
+    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === blinkloaderVersion) {
+      const imgsrc = Blinkloader.prefetchMap[src];
+      if (imgsrc) {
+        styles.backgroundImage = `${gradient ? gradient + ', ' : ''} url(${imgsrc})`;
+        return <div
+          style={{...styles}}
+          className={(className || '')}
+          ref={this.setImagePlaceholder}
+          {...inheritedProps}
+        ></div>
+      }
+    }
     return <div
       {...dataset}
       style={{...styles}}

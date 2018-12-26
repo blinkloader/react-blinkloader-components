@@ -1,13 +1,6 @@
 import React from 'react';
 
 import {
-  blinkloaderProjectId,
-  blinkloaderToken,
-  blinkloaderApiDomain,
-  blinkloaderCdnDomain
-} from './Provider';
-
-import {
   noBlinkloaderJs,
   blinkloaderVersion,
   noBlinkloaderProjectId,
@@ -29,18 +22,19 @@ export default class Img extends React.Component {
   }
 
   componentDidMount() {
+    this._isMounted = true;
+    this.state.initialRender = false;
+
     if (this._isRendered) {
       return;
     }
 
-    this._isMounted = true;
     const { lazyload } = this.props;
     const { imgPlaceholder, validSdk } = this.state;
     if (!imgPlaceholder) {
       return;
     }
 
-    this.state.initialRender = false;
     if (lazyload && validSdk) {
       Blinkloader.registerImage(this.renderRelevantImage, imgPlaceholder);
       return
@@ -48,52 +42,42 @@ export default class Img extends React.Component {
     this.renderRelevantImage();
   }
 
-  renderRelevantImage(cb) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
+    const {src} = nextProps;
+    this.renderRelevantImage(null, src);
+  }
+
+  renderRelevantImage(cb, newsrc) {
     const { validSdk, imgPlaceholder } = this.state;
-    const { src, progressive } = this.props;
+    const { progressive } = this.props;
     const { setSrcValue, setState } = this;
+    let src = this.props.src;
 
-    const projectId = blinkloaderProjectId;
-    const token = blinkloaderToken;
-
-    let noProjectId = false;
-
-    if (projectId === "") {
-      console.error(noBlinkloaderProjectId);
-      noProjectId = true;
-    }
-
-    if (!validSdk || noProjectId) {
+    if (!validSdk) {
       setSrcValue(src);
       return
     }
-    const { disableFurtherImgRequests } = this.state;
-    if (disableFurtherImgRequests) {
-      return;
+
+    if (newsrc) {
+      src = newsrc;
     }
-    this.state.disableFurtherImgRequests = disableFurtherImgRequests || true;
 
     let width = Blinkloader.getDivWidth(imgPlaceholder);
     if (width <= 1) {
       width = Blinkloader.determineDivWidth(imgPlaceholder);
     }
-    const imagePayload = { width, src, projectId, token, pageUrl: window.location.href };
-    const that = this;
 
-    if (blinkloaderApiDomain) {
-      imagePayload.apiDomain = blinkloaderApiDomain;
-    }
-    if (blinkloaderCdnDomain) {
-      imagePayload.cdnDomain = blinkloaderCdnDomain;
-    }
+    const imagePayload = { width, src, pageUrl: window.location.href };
+
+    const that = this;
 
     let imageSet = false;
     if (progressive) {
-      Blinkloader.getSvgImage(imagePayload).then(function(url) {
+      Blinkloader.getSvgImage(imagePayload, function(url) {
         if (!imageSet) {
           setSrcValue(url);
         }
-      }).catch(function(){});
+      }, function(){});
     }
 
     let cbDone = false;
@@ -104,9 +88,9 @@ export default class Img extends React.Component {
       }
       setSrcValue(url);
     }
-    Blinkloader.getImage(imagePayload).then(function(url) {
+    Blinkloader.getImage(imagePayload, function(url) {
       setImgFunc(url);
-    }).catch(function(err){
+    }, function(err){
       setImgFunc(src);
     })
   }
@@ -175,6 +159,7 @@ export default class Img extends React.Component {
       return <img
         src={src}
         style={{...style}}
+        ref={this.setImagePlaceholder}
         className={(className || '')}
         {...inheritedProps}
       />
@@ -188,6 +173,20 @@ export default class Img extends React.Component {
         className={className || ''}
         {...inheritedProps}
       />;
+    }
+
+    // initial render
+    if (typeof Blinkloader !== 'undefined' && Blinkloader.version === blinkloaderVersion) {
+      const imgsrc = Blinkloader.prefetchMap[src];
+      if (imgsrc) {
+        return <img
+          src={imgsrc}
+          style={{...style}}
+          ref={this.setImagePlaceholder}
+          className={className || ''}
+          {...inheritedProps}
+        />;
+      }
     }
     return <img
       src={srcPlaceholder}
